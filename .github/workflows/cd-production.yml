@@ -93,7 +93,7 @@ jobs:
 
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/fn-cicd-deploy-role
           aws-region: ${{ env.AWS_REGION }}
@@ -180,12 +180,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.preflight.outputs.version_tag }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/fn-cicd-deploy-role
           aws-region: ${{ env.AWS_REGION }}
@@ -197,7 +197,7 @@ jobs:
             --name ${{ env.EKS_CLUSTER }}
 
       - name: Set up kubectl and Helm
-        uses: azure/setup-kubectl@v3
+        uses: azure/setup-kubectl@v5
         with:
           version: 'v1.29.0'
 
@@ -342,12 +342,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.preflight.outputs.version_tag }}
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -375,7 +375,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.preflight.outputs.version_tag }}
           fetch-depth: 0
@@ -438,7 +438,7 @@ jobs:
           fi
 
       - name: Notify Slack #fn-releases
-        uses: slackapi/slack-github-action@v1.25.0
+        uses: slackapi/slack-github-action@v4.0.0
         with:
           channel-id: ${{ secrets.SLACK_RELEASES_CHANNEL_ID }}
           payload: |
