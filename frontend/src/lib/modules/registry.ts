@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
+import { isNavHrefAvailable } from './features'
 import {
   Flame,
   Video,
@@ -184,7 +185,24 @@ export const MODULES: SuiteModule[] = [
   },
 ]
 
-export const OPTIONAL_MODULES = MODULES.filter((m) => m.optional)
+// ─── Distribution filtering ───────────────────────────────────────────────────
+// MODULES above is the full product. What a given build actually exposes is
+// MODULES minus whatever the premium manifest withholds from it, so the free web
+// edition never renders a nav entry whose route it does not serve.
+//
+// Applied here rather than in Sidebar.tsx because every consumer of the registry
+// needs the same answer — the sidebar, moduleForPath(), and the Integrations
+// module toggles would otherwise disagree about which pages exist. Sections left
+// with no surviving navItems are dropped whole, so a free build shows no empty
+// module header.
+const AVAILABLE_MODULES: SuiteModule[] = MODULES
+  .map((m) => ({ ...m, navItems: m.navItems.filter((i) => isNavHrefAvailable(i.href)) }))
+  .filter((m) => m.navItems.length > 0 || !m.optional)
+
+/** The modules this build serves. Prefer this over MODULES for anything user-facing. */
+export const BUILD_MODULES = AVAILABLE_MODULES
+
+export const OPTIONAL_MODULES = AVAILABLE_MODULES.filter((m) => m.optional)
 
 export function moduleForPath(pathname: string): SuiteModule | undefined {
   return MODULES.find((m) => m.routePrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`)))

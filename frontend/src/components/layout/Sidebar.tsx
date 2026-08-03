@@ -24,7 +24,7 @@ import { useAlertStore } from '@/store/useAlertStore'
 import { useFeedStore, type FeedStatus } from '@/store/useFeedStore'
 import { useEntitlementStore } from '@/store/useEntitlementStore'
 import { usePopoutStore, POPOUT_META, type PopoutKey } from '@/store/usePopoutStore'
-import { MODULES, moduleForPath, type ModuleId, type SuiteModule } from '@/lib/modules/registry'
+import { BUILD_MODULES, moduleForPath, type ModuleId, type SuiteModule } from '@/lib/modules/registry'
 import { APP_NAME, APP_VERSION } from '@/lib/constants'
 import { migrateStorageKey } from '@/lib/utils/storageMigration'
 
@@ -54,7 +54,7 @@ function loadOrder(): SectionOrder {
     const parsed: SectionOrder = JSON.parse(stored)
     // Merge with defaults so newly added pages always appear
     const merged: SectionOrder = {}
-    for (const mod of MODULES) {
+    for (const mod of BUILD_MODULES) {
       const defaults = defaultOrder(mod)
       const saved = parsed[mod.id] ?? []
       const order = saved.filter((h) => defaults.includes(h))
@@ -230,7 +230,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     })
   }, [isExpanded])
 
-  const visibleModules = MODULES.filter((mod) => isEnabled(mod.id))
+  const visibleModules = BUILD_MODULES.filter((mod) => isEnabled(mod.id))
 
   const orderedItems = useCallback((mod: SuiteModule) => {
     const hrefs = order[mod.id] ?? defaultOrder(mod)
