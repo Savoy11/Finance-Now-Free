@@ -69,6 +69,6 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
-    "vitest": "^3.0.0"
+    "vitest": "^4.1.10"
   }
 }
