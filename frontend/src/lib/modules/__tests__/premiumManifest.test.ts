@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import {
   PREMIUM_FEATURES,
+  PREMIUM_COMPONENTS,
   PREMIUM_PAGE_ROUTES,
   PREMIUM_DATA_ROUTES,
   PREMIUM_NAV_HREFS,
@@ -95,6 +98,60 @@ describe('premium manifest integrity', () => {
       expect(r.startsWith('/'), `route "${r}" is not absolute`).toBe(true)
       expect(r.endsWith('/'), `route "${r}" has a trailing slash`).toBe(false)
     }
+  })
+})
+
+describe('premium components inside free pages', () => {
+  // Manifest paths are relative to src/; this file sits in src/lib/modules/__tests__.
+  const SRC = path.resolve(__dirname, '../../..')
+  const read = (rel: string) => readFileSync(path.join(SRC, `${rel}.tsx`), 'utf8')
+  const exportedNames = (src: string) =>
+    [...src.matchAll(/^export\s+(?:async\s+)?(?:function|const|class)\s+([A-Za-z0-9_$]+)/gm)]
+      .map((m) => m[1])
+
+  it('points every entry at a real module and a real stub', () => {
+    // A typo in either path makes NormalModuleReplacementPlugin match nothing and
+    // fail silently — the build succeeds and ships the premium component. Checked
+    // against the filesystem because that is the only thing that catches it.
+    for (const c of PREMIUM_COMPONENTS) {
+      for (const key of ['module', 'stub'] as const) {
+        const file = path.join(SRC, `${c[key]}.tsx`)
+        expect(existsSync(file), `${c.id}: ${key} "${c[key]}" does not exist`).toBe(true)
+      }
+    }
+  })
+
+  it('gives the stub every export the module it replaces has', () => {
+    // The host page is compiled unchanged and destructures by name, so a stub
+    // missing an export breaks the free distribution only — the one build nobody
+    // runs locally.
+    //
+    // Compared as source text rather than by importing the modules: these are
+    // .tsx client components, so importing them here would drag JSX and React
+    // into a node test to answer a question that is really about the files.
+    for (const c of PREMIUM_COMPONENTS) {
+      const stubExports = exportedNames(read(c.stub))
+      for (const name of exportedNames(read(c.module))) {
+        expect(stubExports, `${c.id}: stub is missing export "${name}"`).toContain(name)
+      }
+    }
+  })
+
+  it('ties every component to a declared premium feature', () => {
+    const ids = new Set(PREMIUM_FEATURES.map((f) => f.id))
+    for (const c of PREMIUM_COMPONENTS) {
+      expect(ids.has(c.id), `component "${c.module}" names unknown feature "${c.id}"`).toBe(true)
+    }
+  })
+
+  it('withholds the crypto backtest tab as well as the equities page', () => {
+    // Backtesting had two surfaces and only one was a route. Cutting the page
+    // alone would have left the crypto simulation running on the web.
+    const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
+    expect(shipped).not.toContain('/equities/backtests')
+    expect(PREMIUM_COMPONENTS.map((c) => c.module)).toContain('components/analytics/BacktestPanel')
+    // Technical Analysis itself stays free — only the simulation is withheld.
+    expect(shipped).toContain('/technical-analysis')
   })
 })
 

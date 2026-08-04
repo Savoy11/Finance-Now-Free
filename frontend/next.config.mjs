@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { PREMIUM_PAGE_ROUTES } from './src/lib/modules/premiumManifest.mjs'
+import { PREMIUM_PAGE_ROUTES, PREMIUM_COMPONENTS } from './src/lib/modules/premiumManifest.mjs'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 
@@ -80,6 +80,26 @@ const nextConfig = {
           path.resolve(HERE, 'src/lib/premiumStub.tsx')
         )
       )
+    }
+
+    // ── Premium components inside otherwise-free pages ──
+    // A feature with no route of its own (the Backtest tab on the free Technical
+    // Analysis page) can't be redirected or 404'd, so its module is swapped for a
+    // stub with the same exports. The host page compiles unchanged and resolves to
+    // the stub, which imports no engine — so the engine, imported by nothing else,
+    // is dropped rather than shipped inside a page the web build still serves.
+    if (!PREMIUM_BUILD) {
+      for (const c of PREMIUM_COMPONENTS) {
+        // Anchored to the resolved absolute path so the match cannot collide with
+        // a same-named module elsewhere in the tree or in node_modules.
+        const target = path.resolve(HERE, 'src', `${c.module}.tsx`)
+        config.plugins.push(
+          new webpack.NormalModuleReplacementPlugin(
+            new RegExp(`^${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
+            path.resolve(HERE, 'src', `${c.stub}.tsx`)
+          )
+        )
+      }
     }
     return config
   },

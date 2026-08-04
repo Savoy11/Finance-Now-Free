@@ -76,6 +76,19 @@ UI links to it.
 | 2 | **Routing** | `next.config.mjs` → `redirects()` | Premium URLs → `/upgrade`. |
 | 3 | **Server** | `src/middleware.ts` | 404s every premium data route, before the handler runs. **This is the layer that actually holds** — no request, header, or cookie can turn a build-time constant off. |
 | 4 | **Nav** | `src/lib/modules/registry.ts` → `BUILD_MODULES` | Premium sidebar entries don't render, and no empty module header is left behind. |
+| 5 | **Component** | `next.config.mjs` → `PREMIUM_COMPONENTS` | Swaps a premium component *inside a free page* for a stub with the same exports, so its engine is imported by nothing and drops out. |
+
+### Point 5: features that own no route
+
+Not every premium feature has a URL. The Backtest tab lives inside the free Technical Analysis
+page — nothing to redirect, no handler to 404, and the sellable part (the strategy engine) would
+otherwise be compiled straight into a page the web build still serves.
+
+Such a component **must live in its own module**. Left inline, the best available guard is a dead
+`if (PREMIUM_BUILD)` branch whose top-level `import` of the engine survives unless the minifier
+chooses to drop it — protection resting on an optimisation rather than a guarantee. A module the
+page no longer resolves to cannot ship whatever it imported. `BacktestPanel` was extracted from
+`technical-analysis/page.tsx` for exactly this reason.
 
 `src/lib/server/premiumGuard.ts` (`premiumOnly()`) covers the case middleware can't express: a
 one-off premium handler sitting inside an otherwise-free subtree.
@@ -92,9 +105,15 @@ Built and probed in both directions on 2026-08-03:
   `/coin-discovery` restored to its full 9.76 kB.
 - **Desktop build** — every premium page restored to full size (`/portfolio-builder` back to
   20 kB, `/wallets` 8.49 kB, `/brief` 7.44 kB).
-- 548 tests pass, type-check clean, lint 0 errors. 20 tests cover fail-closed defaulting, prefix
+- **Backtesting, checked by string rather than by file size** — the strongest evidence available.
+  Grepping the built client chunks for the engine's own strategy names (`Donchian breakout`,
+  `Golden / death cross`, `RSI dip in uptrend`) returns **0 hits in the web build and 1 each in
+  the desktop build**. `/technical-analysis` drops 27.2 kB → 19.9 kB with the tab removed;
+  `/equities/backtests` 6.91 kB → 380 B.
+- 552 tests pass, type-check clean, lint 0 errors. 24 tests cover fail-closed defaulting, prefix
   matching (`/budget` must not swallow `/budgets`), manifest/registry agreement, each owner
-  decision above, and the data-source catalogue filtering.
+  decision above, the data-source catalogue filtering, and — for premium components — that both
+  paths resolve to real files and the stub carries every export the real module does.
 
 > One note when re-running this probe off the owner's machine: `/live-data/coin-discovery`
 > answers **503** with its own body (`CoinGecko … HTTP 403`), because CoinGecko blocks datacenter
@@ -148,7 +167,7 @@ affiliate revenue. Premium = AI, personal finance, and server-side scoring → s
 | Wallets & Exchange Connections | crypto | `/wallets`, `/live-data/wallet/*` |
 | **Staking Discovery** | crypto | `/staking-discovery`, `/live-data/staking-discovery` |
 | AI Outlier Scan | equities | `/live-data/stock-outliers` |
-| Strategy Backtests | equities | `/equities/backtests` |
+| **Strategy Backtests** | equities | `/equities/backtests` **and** the Backtest tab on `/technical-analysis` |
 | Fund Look-Through & Overlap | funds | `/live-data/fund-holdings{,-history}` |
 
 **Owner decisions, 2026-08-03** (revising the first draft):
@@ -159,6 +178,12 @@ affiliate revenue. Premium = AI, personal finance, and server-side scoring → s
 - **Coin Discovery stays free**, and its `/live-data/coin-discovery` route stays open with it —
   withholding the data of a free feature would just break the page.
 - **Staking Discovery is desktop-only.** Staking Opportunities (`/staking`) is unaffected.
+- **Backtesting is desktop-only — both surfaces.** It was never only the
+  `/equities/backtests` page: the free crypto Technical Analysis page carried a **Backtest tab**
+  running the same kind of simulation. Cutting the page alone would have left it running on the
+  web and the removal half-done. Technical Analysis itself stays free — Chart, Patterns and
+  Scanner are untouched, and only the strategy simulation is withheld.
+- **The Watchlist stays free**, confirmed against the open question raised last round.
 
 Nothing is deleted from the codebase. Every entry above is a **web-build exclusion**; the desktop
 build is unchanged and still contains all of it.
@@ -185,18 +210,17 @@ Portfolios keeps everything but look-through; the Stock Registry keeps everythin
 
 ### Open questions for the owner
 
-Settled 2026-08-03: the portfolio pillar (both tools), Coin Discovery, and Staking Discovery — see
-the decisions above. Still open:
+Settled 2026-08-03: the portfolio pillar (both tools), Coin Discovery, Staking Discovery,
+backtesting (both surfaces), and the Watchlist staying free — see the decisions above. Still open:
 
-1. **Backtests** — keep in the paid set knowing it isn't defensible yet, or drop it until the
-   simulation moves server-side?
-2. **Videos** — currently loses only the AI analysis step; search and the feed stay free. Right
+1. **Videos** — currently loses only the AI analysis step; search and the feed stay free. Right
    line, or should the whole surface go?
-3. **Upsell copy** — `/upgrade` lists premium feature names and says they're in the desktop
+2. **Upsell copy** — `/upgrade` lists premium feature names and says they're in the desktop
    edition. Needs real positioning and a link once pricing exists.
-4. **Watchlist without Portfolios.** The watchlist stays free and is now the only place a web
-   reader tracks instruments. Worth checking it reads well as a standalone feature rather than as
-   the lightweight half of a pair.
+3. **Server-side follow-up.** Portfolio Builder's allocation engine and both backtest simulations
+   are client-side math. The web build no longer contains them, but the *method* is only protected
+   once the computation moves behind a route. Worth scheduling if these become headline paid
+   features rather than bundle filler.
 
 ---
 

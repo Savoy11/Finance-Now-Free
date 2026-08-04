@@ -173,21 +173,24 @@ export const PREMIUM_FEATURES = [
       'Registry itself stays free; the scan panel on it is cut.',
   },
   {
-    id: 'equity-backtests',
+    id: 'backtests',
     module: 'equities',
     label: 'Strategy Backtests',
     pageRoutes: ['/equities/backtests'],
     navHrefs: ['/equities/backtests'],
     dataRoutes: [],
     rationale:
-      '⚠ Weakest protection case on this list, and flagged as such: the strategy ' +
-      'simulation runs client-side over /live-data/security-ohlcv, which stays free ' +
-      'for charting. Excluding the page removes the feature from the web edition, ' +
-      'but a determined reader could reimplement it against the public OHLCV route. ' +
-      'Listed because it is a coherent paid feature, NOT because it is defensible ' +
-      'as-is — moving the simulation server-side is the same follow-up as Portfolio ' +
-      'Builder. Drop it from this list if the split should only contain things the ' +
-      'mechanism can genuinely hold.',
+      'Owner decision (2026-08-03): backtesting is desktop-only. TWO surfaces, not ' +
+      'one — the /equities/backtests page and the Backtest tab on the free crypto ' +
+      'Technical Analysis page. The tab is handled through PREMIUM_COMPONENTS below, ' +
+      'since it has no route of its own; cutting only the page would have left the ' +
+      'crypto simulation running on the web and the removal half-done. Both engines ' +
+      '(lib/utils/equityBacktest.ts and lib/utils/backtest.ts) become unreachable ' +
+      'and drop out of the bundle. ⚠ Standing caveat: both simulations are ' +
+      'client-side over /live-data/{security-,}ohlcv, which stays free for charting, ' +
+      'so the code is absent but the method could be reimplemented. Moving the ' +
+      'simulation server-side is the same follow-up as Portfolio Builder. Technical ' +
+      'Analysis itself stays free — only the strategy simulation is withheld.',
   },
   {
     id: 'fund-look-through',
@@ -202,6 +205,38 @@ export const PREMIUM_FEATURES = [
       'Compare overlap section. Portfolios is now desktop-only in its own right, so ' +
       'on the web this cut lands on Compare alone: the page stays free and loses ' +
       'only its overlap panel, degrading rather than disappearing.',
+  },
+]
+
+// ─── Premium components inside otherwise-free pages ───────────────────────────
+// Not every premium feature owns a route. The Backtest tab lives inside the free
+// Technical Analysis page, so there is no URL to redirect and no handler to 404 —
+// the sellable part is the strategy engine that would otherwise be compiled into
+// a page the web build still serves.
+//
+// Each entry swaps `module` for `stub` at build time. The stub must export the
+// same names with the same props: the importing page is compiled unchanged and
+// simply resolves to a different file.
+//
+// This is why such a component must live in its own module rather than inline in
+// the page. Inline, the best available guard is a dead `if (PREMIUM_BUILD)` branch
+// whose top-level import of the engine survives unless the minifier chooses to
+// drop it — protection resting on an optimisation, not on a guarantee. A module
+// the page no longer resolves to cannot ship whatever it imported.
+
+/**
+ * @typedef {object} PremiumComponent
+ * @property {string} id      Feature id this belongs to (see PREMIUM_FEATURES).
+ * @property {string} module  Path from src/, without extension.
+ * @property {string} stub    Replacement path from src/, without extension.
+ */
+
+/** @type {PremiumComponent[]} */
+export const PREMIUM_COMPONENTS = [
+  {
+    id: 'backtests',
+    module: 'components/analytics/BacktestPanel',
+    stub: 'components/analytics/BacktestPanel.stub',
   },
 ]
 
