@@ -38,7 +38,7 @@ providers, enters API keys, or configures feeds. What you see is what the site s
 
 | Area | Free surfaces |
 |---|---|
-| **Core** | Headlines (landing feed), Watchlist, Compare (2–6 assets, correlation + overlap-aware), Videos (search + feed) |
+| **Core** | Headlines (landing feed), Watchlist (saved in your browser — no account needed), Compare (2–6 assets, correlation + overlap-aware), Videos (search + feed) |
 | **Crypto** | Coin Registry + coin detail, Reserve Transparency Monitor, crypto news with sentiment, Staking Opportunities (55 providers), Coin Discovery, Technical Analysis (charts, 16+ indicators, patterns, scanner) |
 | **Equities** | Stock Registry + stock detail (SEC filings, XBRL fundamentals), market news, equity TA, market calendar |
 | **Macro** | Commodities, currencies + two-tier FX converter, bonds & rates with the official Treasury yield curve, macro news, macro TA over 45 instruments |
@@ -89,7 +89,13 @@ npm run dev            # free web edition on http://localhost:3000
 
 No environment variables are required for the free edition — it runs keyless against public data
 sources through its own server-side `/live-data/*` proxy routes (no keys in the browser, no mock
-data path). Optional provider keys in `frontend/.env.local` raise rate limits.
+data path), and it needs **no database**: the Watchlist persists to `localStorage`, so there is no
+sign-up and a visitor's lists never leave their device. Optional provider keys in
+`frontend/.env.local` raise rate limits.
+
+Deployments should set `NEXT_PUBLIC_FN_DISTRIBUTION=web` explicitly. Unset already yields the free
+edition (the flag fails closed and every exclusion still applies), but setting it lets the
+minifier strip the guarded desktop branches instead of shipping them as unreachable code.
 
 To build the full product from this codebase (for verifying parity, not for deployment here):
 

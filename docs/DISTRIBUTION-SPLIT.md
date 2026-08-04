@@ -211,6 +211,35 @@ affiliate revenue. Premium = AI, personal finance, and server-side scoring → s
   banner on every free page reads it; its POST is behind `guardSensitiveRoute`/`FN_ADMIN_TOKEN`.
   With `/settings` gone the Suite Module toggles are unreachable, so a free build always runs
   with every included module enabled.
+- **The Watchlist is localStorage-only on the web.** It stays free, but its persistence backend
+  is chosen at build time: Postgres on desktop, the browser on the web. The free edition has no
+  auth wall and no sign-up, so `/api/user/*` has no user to own a row — those routes 503 in
+  production, and setting `FN_ALLOW_LOCAL_USER=true` to avoid that would hand every anonymous
+  visitor **one shared account**, with every reader editing the same list. Local-only avoids both:
+  lists survive reloads and never leave the device. The store's interface is unchanged, so the
+  page, `useWatchlistBias`, the Daily Brief and `useAssets` are untouched.
+
+### One measured caveat about `PREMIUM_BUILD` (2026-08-04)
+
+**An imported `PREMIUM_BUILD` hides code; it does not remove it.** It is not folded by the
+minifier — it survives as a runtime conditional, so a guarded branch still ships in the bundle
+even though it never executes. That is fine where the value is *behaviour* (hiding a table column,
+dropping a tab), which is all those guards are for.
+
+Where the code must physically not ship, only two things achieve it:
+
+1. **Page stubbing / `PREMIUM_COMPONENTS`** in `next.config.mjs` — the real mechanism, and how the
+   backtest engine, the fee table, and the assistant are removed.
+2. **A direct literal read of `process.env.NEXT_PUBLIC_FN_DISTRIBUTION`** inside the module, which
+   Next inlines textually so the minifier can fold it — **but only when the variable is actually
+   set**, since Next inlines nothing for an absent var. `useWatchlistStore` is the worked example:
+   with `NEXT_PUBLIC_FN_DISTRIBUTION=web` its `/api/user/watchlists` calls disappear from the
+   bundle; unset, they remain as unreachable code.
+
+**No premium enforcement depends on this.** Page/component exclusion is decided in
+`next.config.mjs` from Node's `process.env`, and route 404s come from middleware running
+server-side — both verified working with the variable unset. Setting it explicitly on deploy is a
+bundle-hygiene win, not a security fix.
 
 Nothing is deleted from the codebase. Every entry above is a **web-build exclusion**; the desktop
 build is unchanged and still contains all of it.

@@ -19,18 +19,17 @@ repository and is untouched by anything here.
       every nav entry, confirm nothing renders a dead panel, empty column, or link into a
       premium route. (The known link-shaped leftovers are listed as P1 polish below.)
 - [ ] **Deployment target + pipeline.** Where the free site actually runs (Vercel / VPS / other),
-      with `NEXT_PUBLIC_FN_DISTRIBUTION` deliberately unset so the fail-closed default does its
-      job, and `FN_ADMIN_TOKEN` set so the admin-guarded routes stay locked on a public host.
+      and `FN_ADMIN_TOKEN` set so the admin-guarded routes stay locked on a public host.
+      **Set `NEXT_PUBLIC_FN_DISTRIBUTION=web` explicitly.** Leaving it unset still produces the
+      free edition — the flag fails closed and every premium route/page/component exclusion works
+      regardless — but Next only inlines `NEXT_PUBLIC_*` vars that are actually present, so unset
+      means the in-module guards ship their dead branch instead of being minified away. Measured:
+      with it set, the watchlist's `/api/user/watchlists` calls vanish from the bundle; unset,
+      they remain as unreachable code.
 - [ ] **Legal floor for a public site.** Terms of Service, Privacy Policy, "not investment
       advice" page, and data-source attribution page, linked from the footer. The requirements
       list already exists in `docs/BUSINESS-CHECKLIST.md` §3 — this item is rendering them on the
       site.
-- [ ] **Decide the auth story for user data on the web.** Watchlists persist through
-      `/api/user/watchlists` with the auth wall off — on a public deployment with
-      `FN_ALLOW_LOCAL_USER` unset those routes 503, so the Watchlist (the free edition's only
-      tracking feature) would not persist. Either enable sign-up, or make the watchlist
-      localStorage-only on the web, or accept it as session-only. This is a product decision, not
-      just configuration.
 
 ## P1 — before/shortly after launch
 
@@ -70,6 +69,15 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-04 — Watchlist is localStorage-only on the web** (owner decision, closing the
+      auth-story P0). The store keeps one interface and switches backend at build time: Postgres
+      on desktop, `localStorage` on the web. No sign-up, no shared-account hazard, and no
+      database dependency — a visitor's lists live in their browser and never leave the device.
+      Legacy-key import and starter seeding behave as before. 7 tests cover persistence across
+      reloads, legacy import, corrupt-blob recovery, and that the free build never calls the API.
+      Found and documented while verifying: an imported `PREMIUM_BUILD` is not minified away
+      (it hides code, it does not remove it) — only page/component substitution and a direct
+      inlined env read do that. None of the premium enforcement depended on the difference.
 - [x] **2026-08-04 — Socials, Transfer Fees, Risk Scores, and source configuration cut from the
       web.** Both social pages/routes; the transfer-fee toolset including its three `/api/v1`
       endpoints and `/live-data/network-fees`; the risk-scores page/route with the Coins table

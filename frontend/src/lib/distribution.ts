@@ -27,7 +27,30 @@ const RAW = process.env.NEXT_PUBLIC_FN_DISTRIBUTION
 // the paid product to the open web, which is unrecoverable.
 export const DISTRIBUTION: Distribution = RAW === 'desktop' ? 'desktop' : 'web'
 
-/** True only in the full desktop build. Guard every premium surface on this. */
+/**
+ * True only in the full desktop build. Guard every premium surface on this.
+ *
+ * ⚠ **This guard hides code; it does not remove it.** Measured 2026-08-04: an
+ * imported `PREMIUM_BUILD` is NOT folded by the minifier — it survives as a
+ * runtime conditional, so the guarded branch still ships in the bundle even
+ * though it never executes. That is fine for anything whose value is *behaviour*
+ * (hiding a column, dropping a tab), which is what this constant is for.
+ *
+ * It is NOT sufficient when the code itself must not ship. For that, use one of:
+ *  - `PREMIUM_COMPONENTS` / page stubbing in next.config.mjs — the real
+ *    mechanism, since a module the build no longer resolves to cannot ship what
+ *    it imported (this is how the backtest engine and the fee table are removed);
+ *  - a direct literal read of `process.env.NEXT_PUBLIC_FN_DISTRIBUTION` in the
+ *    module itself, which Next inlines textually so the minifier can fold it —
+ *    but only when the variable is actually SET at build time, since Next
+ *    inlines nothing for an absent var (see useWatchlistStore for a worked
+ *    example, and set the variable explicitly on deploys for this reason).
+ *
+ * Security note: none of the premium *enforcement* depends on this folding. Page
+ * and component exclusion is decided in next.config.mjs from Node's process.env,
+ * and the route 404s come from middleware running server-side — both work with
+ * the variable unset.
+ */
 export const PREMIUM_BUILD = DISTRIBUTION === 'desktop'
 
 /**
