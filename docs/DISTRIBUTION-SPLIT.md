@@ -169,6 +169,11 @@ affiliate revenue. Premium = AI, personal finance, and server-side scoring → s
 | AI Outlier Scan | equities | `/live-data/stock-outliers` |
 | **Strategy Backtests** | equities | `/equities/backtests` **and** the Backtest tab on `/technical-analysis` |
 | Fund Look-Through & Overlap | funds | `/live-data/fund-holdings{,-history}` |
+| **Crypto Social Sentiment** | crypto | `/social`, `/live-data/social` |
+| **Stock Social Sentiment** | equities | `/equities/social`, `/live-data/stock-social` |
+| **Transfer Fee Calculator** | crypto | `/transfer-fees`, `/live-data/network-fees`, `/api/v1/{transfer,exchanges,network-fees}` |
+| **Safety Scores & Risk Analysis** | crypto | `/risk-scores`, `/live-data/risk-scores` (+ `PREMIUM_BUILD`-gated score surfaces on free pages) |
+| **Data Source & Integration Controls** | core | `/settings`, `/data-sources`, TopBar TierSwitch (component swap) |
 
 **Owner decisions, 2026-08-03** (revising the first draft):
 
@@ -185,16 +190,38 @@ affiliate revenue. Premium = AI, personal finance, and server-side scoring → s
   Scanner are untouched, and only the strategy simulation is withheld.
 - **The Watchlist stays free**, confirmed against the open question raised last round.
 
+**Owner decisions, 2026-08-04** (this round):
+
+- **Social sentiment is desktop-only, both markets** — `/social` and `/equities/social` with their
+  routes.
+- **The Transfer Fee Calculator is desktop-only**, reversing the earlier "affiliate surfaces stay
+  free" position for this page. The whole toolset goes together — the page, live gas fees, and the
+  three `/api/v1` endpoints exposing the same data — because cutting the page while the API still
+  answered would remove the UI, not the feature. The test that asserted `/transfer-fees` stayed
+  free was deleted deliberately, exactly as its own comment demanded. **Staking Opportunities is
+  now the free edition's affiliate surface.**
+- **Safety Scores / risk analysis are desktop-only.** The `lib/risk` engine runs server-side — the
+  sellable-and-protectable shape. The free pages that *displayed* scores stay free and hide those
+  surfaces via `PREMIUM_BUILD` guards (Coins table columns, coin detail gauge + risk panel) rather
+  than rendering permanent N/A for a feature the build doesn't have.
+- **Data sources are hard-coded on the web** — no provider picking, key entry, custom feeds, or
+  tier switching. `/settings` and `/data-sources` are cut; the TierSwitch and the Assistant chat
+  widget (whose `/api/agents/chat` backend was already premium) are swapped out of the free
+  chrome. One deliberate exception: `/live-data/config` **GET** stays, because the feed-status
+  banner on every free page reads it; its POST is behind `guardSensitiveRoute`/`FN_ADMIN_TOKEN`.
+  With `/settings` gone the Suite Module toggles are unreachable, so a free build always runs
+  with every included module enabled.
+
 Nothing is deleted from the codebase. Every entry above is a **web-build exclusion**; the desktop
 build is unchanged and still contains all of it.
 
 ### Free — everything else
 
-Headlines · Coins registry + detail + Reserve Monitor · Crypto News · Social · **Transfer Fees** ·
-**Staking Opportunities** · **Coin Discovery** · Risk Scores · Crypto TA · Stock Registry + detail ·
-Market News · Stock Social · Equity TA · Calendar · all of Macro (commodities, currencies +
-converter, bonds & rates + yield curve, macro news, macro TA) · Fund Registry + detail · Watchlist ·
-Compare · Videos (search + feed) · Data Sources · Integrations.
+Headlines · Coins registry + detail + Reserve Monitor · Crypto News · **Staking Opportunities**
+(the affiliate surface) · **Coin Discovery** · Crypto TA (minus backtest) · Stock Registry +
+detail · Market News · Equity TA · Calendar · all of Macro (commodities, currencies + converter,
+bonds & rates + yield curve, macro news, macro TA) · Fund Registry + detail · Watchlist · Compare ·
+Videos (search + feed) — all running on hard-coded sources with no configuration surfaces.
 
 The **Data Sources** page is filtered to match (`BUILD_DATA_SOURCES`). It's free, and its whole job
 is an accurate account of where numbers come from — listing "Portfolio prices · Live" for a surface
@@ -210,17 +237,14 @@ Portfolios keeps everything but look-through; the Stock Registry keeps everythin
 
 ### Open questions for the owner
 
-Settled 2026-08-03: the portfolio pillar (both tools), Coin Discovery, Staking Discovery,
-backtesting (both surfaces), and the Watchlist staying free — see the decisions above. Still open:
+Settled so far: the portfolio pillar, Coin Discovery, Staking Discovery, backtesting, the
+Watchlist staying free (2026-08-03); socials, transfer fees, risk scores, and source
+configuration (2026-08-04) — see the decision logs above.
 
-1. **Videos** — currently loses only the AI analysis step; search and the feed stay free. Right
-   line, or should the whole surface go?
-2. **Upsell copy** — `/upgrade` lists premium feature names and says they're in the desktop
-   edition. Needs real positioning and a link once pricing exists.
-3. **Server-side follow-up.** Portfolio Builder's allocation engine and both backtest simulations
-   are client-side math. The web build no longer contains them, but the *method* is only protected
-   once the computation moves behind a route. Worth scheduling if these become headline paid
-   features rather than bundle filler.
+Open items are now tracked in the repo-root **[`CHECKLIST.md`](../CHECKLIST.md)** (prioritized,
+running). The headline ones: `/upgrade` positioning copy, the Videos line (AI-only cut vs whole
+surface), copy that still points at removed surfaces, `/api/v1` docs trimmed to free-edition
+truth, and moving the sellable client-side engines server-side.
 
 ---
 

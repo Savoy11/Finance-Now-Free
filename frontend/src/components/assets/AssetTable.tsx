@@ -12,6 +12,7 @@ import { Sparkline } from '@/components/charts/Sparkline'
 import { getPegDeviationColorClass } from '@/lib/utils/risk'
 import { useAssetStore } from '@/store/useAssetStore'
 import { clsx } from 'clsx'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { ASSET_TYPE_LABELS, BLOCKCHAIN_LABELS, PAGE_SIZE_OPTIONS } from '@/lib/constants'
 
 interface AssetTableProps {
@@ -97,19 +98,26 @@ export function AssetTable({ assets, loading, total }: AssetTableProps) {
           </span>
         ),
       },
-      {
-        key: 'riskScore',
-        header: 'Safety Score',
-        sortable: true,
-        align: 'right',
-        accessor: (row) => <RiskScoreBadge score={row.riskScore} band={row.riskBand} />,
-      },
-      {
-        key: 'riskBand',
-        header: 'Risk Band',
-        sortable: true,
-        accessor: (row) => <RiskBandPill band={row.riskBand} />,
-      },
+      // Safety Score / Risk Band are desktop-only (risk-scores in the premium
+      // manifest). The free build's /live-data/risk-scores 404s, so every row
+      // would render N/A — spread-out empty columns advertising a feature this
+      // build doesn't have. PREMIUM_BUILD is a build-time literal, so the free
+      // bundle folds these entries away entirely.
+      ...(PREMIUM_BUILD ? ([
+        {
+          key: 'riskScore',
+          header: 'Safety Score',
+          sortable: true,
+          align: 'right',
+          accessor: (row) => <RiskScoreBadge score={row.riskScore} band={row.riskBand} />,
+        },
+        {
+          key: 'riskBand',
+          header: 'Risk Band',
+          sortable: true,
+          accessor: (row) => <RiskBandPill band={row.riskBand} />,
+        },
+      ] as Column<Asset>[]) : []),
       {
         key: 'pegDeviationBps',
         header: 'Peg Dev',

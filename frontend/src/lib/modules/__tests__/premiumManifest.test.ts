@@ -144,6 +144,14 @@ describe('premium components inside free pages', () => {
     }
   })
 
+  it('swaps out the assistant chat and the tier switch on the web', () => {
+    // Both live inside free chrome (the dashboard layout and the TopBar), so
+    // like the backtest tab they can only be withheld by module replacement.
+    const modules = PREMIUM_COMPONENTS.map((c) => c.module)
+    expect(modules).toContain('components/agents/AssistantWidget')
+    expect(modules).toContain('components/ui/TierSwitch')
+  })
+
   it('withholds the crypto backtest tab as well as the equities page', () => {
     // Backtesting had two surfaces and only one was a route. Cutting the page
     // alone would have left the crypto simulation running on the web.
@@ -190,14 +198,49 @@ describe('registry filtering in a free build', () => {
   })
 
   it('keeps the free surfaces that carry the traffic and affiliate revenue', () => {
-    // Named explicitly rather than counted: /staking and /transfer-fees are the
-    // affiliate surfaces in docs/ROADMAP.md, and that revenue only exists if the
-    // free web edition can reach them. A future split that sells them should have
-    // to delete this assertion deliberately.
+    // Named explicitly rather than counted. /transfer-fees used to be asserted
+    // here as an affiliate surface; the owner cut it on 2026-08-04 and the
+    // assertion was deleted deliberately, exactly as this comment used to demand.
+    // /staking is now the free affiliate surface.
     const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
-    for (const href of ['/headlines', '/assets', '/staking', '/transfer-fees', '/watchlist', '/compare']) {
+    for (const href of ['/headlines', '/assets', '/staking', '/watchlist', '/compare']) {
       expect(shipped, `free surface "${href}" was cut`).toContain(href)
     }
+  })
+
+  it('holds socials, transfer fees, and source configuration back from the web', () => {
+    // Owner decisions 2026-08-04. Transfer fees goes as a toolset: cutting the
+    // page while /api/v1 still answered route-finding would remove the UI, not
+    // the feature.
+    const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
+    for (const href of ['/social', '/equities/social', '/transfer-fees', '/settings', '/data-sources']) {
+      expect(shipped, `"${href}" still in the sidebar`).not.toContain(href)
+    }
+    for (const r of [
+      '/live-data/social',
+      '/live-data/stock-social',
+      '/live-data/network-fees',
+      '/api/v1/network-fees',
+      '/api/v1/transfer',
+      '/api/v1/exchanges',
+      '/live-data/risk-scores',
+    ]) {
+      expect(PREMIUM_DATA_ROUTES, `${r} still served on the web`).toContain(r)
+    }
+    // The one exception, on purpose: /live-data/config GET powers the feed-status
+    // banner on free pages, and its POST is admin-guarded. See the manifest.
+    expect(PREMIUM_DATA_ROUTES).not.toContain('/live-data/config')
+  })
+
+  it('cuts risk scores without cutting the free pages that showed them', () => {
+    // The Coins registry and coin detail stay free and hide their score surfaces
+    // via PREMIUM_BUILD guards — the pages themselves must not be swept up.
+    expect(isPremiumPath('/assets', PREMIUM_PAGE_ROUTES as string[])).toBe(false)
+    expect(isPremiumPath('/assets/usdc', PREMIUM_PAGE_ROUTES as string[])).toBe(false)
+    expect(isPremiumPath('/risk-scores', PREMIUM_PAGE_ROUTES as string[])).toBe(true)
+    // /api/v1/staking stays free (staking is free) even though its rows carry
+    // risk scores — cutting it would break the free staking surface.
+    expect(isPremiumPath('/api/v1/staking/opportunities', PREMIUM_DATA_ROUTES as string[])).toBe(false)
   })
 
   it('keeps Coin Discovery free, with its data route', () => {

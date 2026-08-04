@@ -40,6 +40,7 @@ const EMBED_CHART_TYPES: { type: ChartType; label: string; desc: string; Icon: L
 import { clsx } from 'clsx'
 import { useAsset, useRiskScoreIndex } from '@/hooks/useAssets'
 import { applyRiskComposite } from '@/lib/api/live/riskScores'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { PegDeviationChart } from '@/components/analytics/PegDeviationChart'
 import { ReserveComposition } from '@/components/analytics/ReserveComposition'
 import { ReserveProvenance, normalisePegMechanism } from '@/components/analytics/reserves'
@@ -481,7 +482,10 @@ function AssetHeader({ asset }: { asset: NonNullable<ReturnType<typeof useAsset>
 
         {/* Right: risk score gauge */}
         <div className="flex items-center gap-6 flex-shrink-0">
-          {/* Risk score */}
+          {/* Risk score — desktop-only (risk-scores in the premium manifest);
+              the free build's /live-data/risk-scores 404s, so this gauge would
+              pin every coin at N/A. */}
+          {PREMIUM_BUILD && (
           <div className="flex flex-col items-center gap-1">
             <div className="text-[10px] text-text-muted uppercase tracking-wide">Safety Score</div>
             <div
@@ -492,6 +496,7 @@ function AssetHeader({ asset }: { asset: NonNullable<ReturnType<typeof useAsset>
             </div>
             <RiskScoreBadge score={asset.riskScore} band={asset.riskBand} showLabel size="md" />
           </div>
+          )}
 
           {/* Quick stats */}
           <div className="flex flex-col gap-2 min-w-32">
@@ -617,8 +622,10 @@ function OverviewTab({ asset }: { asset: NonNullable<ReturnType<typeof useAsset>
         </div>
       )}
 
-      {/* Risk components — live composite from /live-data/risk-scores */}
-      <LiveRiskPanel assetId={asset.id} />
+      {/* Risk components — live composite from /live-data/risk-scores.
+          Desktop-only: the whole panel (and its leaderboard link) goes with the
+          risk-scores feature rather than rendering an empty shell on the web. */}
+      {PREMIUM_BUILD && <LiveRiskPanel assetId={asset.id} />}
     </div>
   )
 }

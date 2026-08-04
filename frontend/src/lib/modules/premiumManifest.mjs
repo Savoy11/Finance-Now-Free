@@ -148,6 +148,87 @@ export const PREMIUM_FEATURES = [
   // /live-data/coin-discovery route stays open with it — withholding the data of
   // a free feature would just break it.
   {
+    id: 'crypto-social',
+    module: 'crypto',
+    label: 'Crypto Social Sentiment',
+    pageRoutes: ['/social'],
+    navHrefs: ['/social'],
+    dataRoutes: ['/live-data/social'],
+    rationale:
+      'Owner decision (2026-08-04): social sentiment is desktop-only, both markets. ' +
+      'The aggregation runs server-side, so the cut is clean.',
+  },
+  {
+    id: 'stock-social',
+    module: 'equities',
+    label: 'Stock Social Sentiment',
+    pageRoutes: ['/equities/social'],
+    navHrefs: ['/equities/social'],
+    dataRoutes: ['/live-data/stock-social'],
+    rationale:
+      'The equities half of the same 2026-08-04 decision: Reddit/StockTwits ' +
+      'blending is server-side (lib/server/socialBlend.ts) and goes with the page.',
+  },
+  {
+    id: 'transfer-fees',
+    module: 'crypto',
+    label: 'Transfer Fee Calculator',
+    pageRoutes: ['/transfer-fees'],
+    navHrefs: ['/transfer-fees'],
+    dataRoutes: [
+      '/live-data/network-fees',
+      '/api/v1/network-fees',
+      '/api/v1/transfer',
+      '/api/v1/exchanges',
+    ],
+    rationale:
+      'Owner decision (2026-08-04), REVERSING the earlier "affiliate surfaces stay ' +
+      'free" position for this page (docs/ROADMAP.md named it the highest-intent ' +
+      'affiliate surface; the test asserting it stayed free was deleted deliberately, ' +
+      'as that test\'s own comment demanded). The whole toolset goes together: the ' +
+      'page, live gas fees (/live-data/network-fees), and the three /api/v1 ' +
+      'endpoints that expose the same fee table and route-finder programmatically — ' +
+      'cutting the page while the API still answered would remove the UI, not the ' +
+      'feature. The fee table itself (lib/data/transferFees.ts) drops out of the ' +
+      'client bundle with the page stub. Staking Opportunities remains the free ' +
+      'affiliate surface.',
+  },
+  {
+    id: 'risk-scores',
+    module: 'crypto',
+    label: 'Safety Scores & Risk Analysis',
+    pageRoutes: ['/risk-scores'],
+    navHrefs: [],
+    dataRoutes: ['/live-data/risk-scores'],
+    rationale:
+      'Owner decision (2026-08-04). The composite scoring engine (lib/risk) runs ' +
+      'server-side — exactly the sellable-and-protectable shape. No navHrefs: the ' +
+      'leaderboard page has no sidebar entry (reached from coin detail). The free ' +
+      'surfaces that displayed the scores degrade with it: the Coins table hides ' +
+      'its Safety Score / Risk Band columns and the coin detail page hides its ' +
+      'score gauge and risk panel (both gated on PREMIUM_BUILD in the components), ' +
+      'rather than rendering permanent N/A columns for a feature this build does ' +
+      'not have.',
+  },
+  {
+    id: 'data-source-config',
+    module: 'core',
+    label: 'Data Source & Integration Controls',
+    pageRoutes: ['/settings', '/data-sources'],
+    navHrefs: ['/settings', '/data-sources'],
+    dataRoutes: [],
+    rationale:
+      'Owner decision (2026-08-04): the free web edition runs on hard-coded data ' +
+      'sources — no provider picking, no API-key entry, no custom feeds, no data ' +
+      'tier switching. Cuts the Integrations page, the Data Sources catalog page, ' +
+      'and the TopBar TierSwitch (via PREMIUM_COMPONENTS). /live-data/config is ' +
+      'deliberately NOT in dataRoutes: its GET powers the feed-status banner on ' +
+      'every free page, and its POST (writing provider config) is already behind ' +
+      'guardSensitiveRoute/FN_ADMIN_TOKEN — the choosing UI is gone, the status ' +
+      'read stays. Suite Module toggles lived on /settings too, so a free build ' +
+      'always runs with every included module enabled.',
+  },
+  {
     id: 'staking-discovery',
     module: 'crypto',
     label: 'Staking Discovery',
@@ -237,6 +318,21 @@ export const PREMIUM_COMPONENTS = [
     id: 'backtests',
     module: 'components/analytics/BacktestPanel',
     stub: 'components/analytics/BacktestPanel.stub',
+  },
+  {
+    // The floating Assistant chat is mounted in the dashboard layout on every
+    // page; its /api/agents/chat backend is premium, so on the web it would be
+    // a chat button that can only ever error.
+    id: 'ai-suite',
+    module: 'components/agents/AssistantWidget',
+    stub: 'components/agents/AssistantWidget.stub',
+  },
+  {
+    // The TopBar data-tier dropdown is the third "choose your sources" surface
+    // beside the two cut pages; with sources hard-coded it configures nothing.
+    id: 'data-source-config',
+    module: 'components/ui/TierSwitch',
+    stub: 'components/ui/TierSwitch.stub',
   },
 ]
 
