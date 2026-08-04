@@ -84,14 +84,22 @@ one-off premium handler sitting inside an otherwise-free subtree.
 
 Built and probed in both directions on 2026-08-03:
 
-- **Web build** — premium pages compile to a 379 B stub (`/portfolio-builder` 20 kB → 379 B);
-  premium data routes return **404** (`coin-discovery`, `staking-discovery`, `stock-outliers`,
-  `fund-holdings`, `api/agents/chat`, `api/user/budget/*`, `wallet/btc`); premium pages **307 →
-  `/upgrade`**; free routes and pages **200**.
+- **Web build** — premium pages compile to a ~380 B stub (`/portfolio-builder` 20 kB → 380 B,
+  `/portfolios` and `/staking-discovery` likewise); premium data routes return **404**
+  (`api/user/portfolios`, `live-data/portfolio-{prices,history}`, `api/user/builder-plans`,
+  `staking-discovery`, `stock-outliers`, `fund-holdings`, `api/agents/chat`, `api/user/budget/*`,
+  `wallet/btc`); premium pages **307 → `/upgrade`**; free routes and pages **200**, with
+  `/coin-discovery` restored to its full 9.76 kB.
 - **Desktop build** — every premium page restored to full size (`/portfolio-builder` back to
   20 kB, `/wallets` 8.49 kB, `/brief` 7.44 kB).
-- 542 tests pass, type-check clean, lint 0 errors. 14 new tests cover fail-closed defaulting,
-  prefix matching (`/budget` must not swallow `/budgets`), and manifest/registry agreement.
+- 548 tests pass, type-check clean, lint 0 errors. 20 tests cover fail-closed defaulting, prefix
+  matching (`/budget` must not swallow `/budgets`), manifest/registry agreement, each owner
+  decision above, and the data-source catalogue filtering.
+
+> One note when re-running this probe off the owner's machine: `/live-data/coin-discovery`
+> answers **503** with its own body (`CoinGecko … HTTP 403`), because CoinGecko blocks datacenter
+> IPs — the IP-dependency `CLAUDE.md` warns about. That is the handler *running*, which is what
+> free means. A withheld route returns an empty 404 with no body; read the body, not the status.
 
 ---
 
@@ -127,29 +135,46 @@ The split makes premium code absent **from the web**; it does not obfuscate the 
 **Thesis:** free = browse, read, compare, and the high-intent affiliate surfaces → traffic and
 affiliate revenue. Premium = AI, personal finance, and server-side scoring → subscription revenue.
 
-### Premium (11 features)
+### Premium — desktop only (11 features)
 
 | Feature | Module | Withheld |
 |---|---|---|
 | AI Research & Daily Brief | core | `/brief`, `/research`, `/agent-config`, `/api/agents/*` |
 | Pump Report | crypto | `/live-data/pump-report/*` |
 | AI Video Analysis | core | `/live-data/video-analyze` |
-| Portfolio Builder | builder | `/portfolio-builder`, `/api/user/builder-plans` |
+| **Portfolios & Holdings** | core | `/portfolios`, `/api/user/portfolios`, `/live-data/portfolio-{prices,history}` |
+| **Portfolio Builder** | builder | `/portfolio-builder`, `/api/user/builder-plans` |
 | Budget & Transactions | budget | `/budget/*`, `/api/user/budget/*` |
 | Wallets & Exchange Connections | crypto | `/wallets`, `/live-data/wallet/*` |
-| Coin Discovery | crypto | `/coin-discovery`, `/live-data/coin-discovery` |
-| Staking Discovery | crypto | `/staking-discovery`, `/live-data/staking-discovery` |
+| **Staking Discovery** | crypto | `/staking-discovery`, `/live-data/staking-discovery` |
 | AI Outlier Scan | equities | `/live-data/stock-outliers` |
 | Strategy Backtests | equities | `/equities/backtests` |
 | Fund Look-Through & Overlap | funds | `/live-data/fund-holdings{,-history}` |
 
+**Owner decisions, 2026-08-03** (revising the first draft):
+
+- **The whole portfolio pillar is desktop-only** — both `/portfolios` and `/portfolio-builder`.
+  Their pricing routes go with them; nothing else calls `/live-data/portfolio-*`, which exists to
+  price a saved portfolio a web reader cannot have.
+- **Coin Discovery stays free**, and its `/live-data/coin-discovery` route stays open with it —
+  withholding the data of a free feature would just break the page.
+- **Staking Discovery is desktop-only.** Staking Opportunities (`/staking`) is unaffected.
+
+Nothing is deleted from the codebase. Every entry above is a **web-build exclusion**; the desktop
+build is unchanged and still contains all of it.
+
 ### Free — everything else
 
 Headlines · Coins registry + detail + Reserve Monitor · Crypto News · Social · **Transfer Fees** ·
-**Staking Opportunities** · Risk Scores · Crypto TA · Stock Registry + detail · Market News · Stock
-Social · Equity TA · Calendar · all of Macro (commodities, currencies + converter, bonds & rates +
-yield curve, macro news, macro TA) · Fund Registry + detail · Watchlist · Portfolios · Compare ·
-Videos (search + feed) · Data Sources · Integrations.
+**Staking Opportunities** · **Coin Discovery** · Risk Scores · Crypto TA · Stock Registry + detail ·
+Market News · Stock Social · Equity TA · Calendar · all of Macro (commodities, currencies +
+converter, bonds & rates + yield curve, macro news, macro TA) · Fund Registry + detail · Watchlist ·
+Compare · Videos (search + feed) · Data Sources · Integrations.
+
+The **Data Sources** page is filtered to match (`BUILD_DATA_SOURCES`). It's free, and its whole job
+is an accurate account of where numbers come from — listing "Portfolio prices · Live" for a surface
+the build cannot serve would make it a liar. A surface is also dropped when one of its folded-in
+`covers` routes is withheld, so nothing claims coverage it no longer has.
 
 **Transfer Fees and Staking Opportunities stay free deliberately.** They are the affiliate-revenue
 surfaces named in `docs/ROADMAP.md`, and that revenue only exists if the free web edition can reach
@@ -160,14 +185,18 @@ Portfolios keeps everything but look-through; the Stock Registry keeps everythin
 
 ### Open questions for the owner
 
-1. **Is the split right?** Especially: should Coin Discovery and Staking Discovery be premium, or
-   are they traffic drivers worth more free? Should Videos lose only analysis, or all of it?
-2. **Backtests** — keep in the paid set knowing it isn't defensible yet, or drop it until the
+Settled 2026-08-03: the portfolio pillar (both tools), Coin Discovery, and Staking Discovery — see
+the decisions above. Still open:
+
+1. **Backtests** — keep in the paid set knowing it isn't defensible yet, or drop it until the
    simulation moves server-side?
-3. **Portfolios** — currently free. It's core to the personal-finance pillar; should the whole
-   thing be premium alongside Budget?
-4. **Upsell copy** — `/upgrade` lists premium feature names and says they're in the desktop
+2. **Videos** — currently loses only the AI analysis step; search and the feed stay free. Right
+   line, or should the whole surface go?
+3. **Upsell copy** — `/upgrade` lists premium feature names and says they're in the desktop
    edition. Needs real positioning and a link once pricing exists.
+4. **Watchlist without Portfolios.** The watchlist stays free and is now the only place a web
+   reader tracks instruments. Worth checking it reads well as a standalone feature rather than as
+   the lightweight half of a pair.
 
 ---
 

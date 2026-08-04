@@ -7,6 +7,7 @@ import {
   isPremiumPath,
 } from '../premiumManifest.mjs'
 import { MODULES, BUILD_MODULES } from '../registry'
+import { BUILD_DATA_SOURCES } from '@/lib/data/dataSources'
 import { DISTRIBUTION, PREMIUM_BUILD } from '@/lib/distribution'
 
 // The free/premium split is a security boundary, not a preference: a mistake here
@@ -97,6 +98,32 @@ describe('premium manifest integrity', () => {
   })
 })
 
+describe('data-source catalogue in a free build', () => {
+  it('does not advertise feeds behind withheld features', () => {
+    // The Data Sources page is free and its whole job is an accurate account of
+    // where numbers come from. Listing "Portfolio prices · Live" for a surface
+    // this build cannot serve makes it a liar.
+    const ids = BUILD_DATA_SOURCES.map((e) => e.id)
+    for (const id of ['portfolio-prices', 'portfolio-history', 'wallet']) {
+      expect(ids, `withheld surface "${id}" still listed`).not.toContain(id)
+    }
+  })
+
+  it('still lists the free surfaces', () => {
+    const ids = BUILD_DATA_SOURCES.map((e) => e.id)
+    for (const id of ['news', 'markets', 'coin-discovery']) {
+      expect(ids, `free surface "${id}" was dropped from the catalogue`).toContain(id)
+    }
+  })
+
+  it('drops a surface whose folded-in sibling route is withheld', () => {
+    // 'videos' covers video-search AND video-analyze; video-analyze is premium.
+    // A surface that keeps claiming full coverage while one of its routes is gone
+    // is the subtler version of the same dishonesty.
+    expect(BUILD_DATA_SOURCES.map((e) => e.id)).not.toContain('videos')
+  })
+})
+
 describe('registry filtering in a free build', () => {
   it('drops every premium nav entry from the build registry', () => {
     const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
@@ -114,6 +141,41 @@ describe('registry filtering in a free build', () => {
     for (const href of ['/headlines', '/assets', '/staking', '/transfer-fees', '/watchlist', '/compare']) {
       expect(shipped, `free surface "${href}" was cut`).toContain(href)
     }
+  })
+
+  it('keeps Coin Discovery free, with its data route', () => {
+    // Owner decision 2026-08-03, reversing the first draft. Asserted because the
+    // page is worthless without /live-data/coin-discovery: cutting the route
+    // while leaving the page is the mistake this pins down.
+    const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
+    expect(shipped).toContain('/coin-discovery')
+    expect(PREMIUM_DATA_ROUTES).not.toContain('/live-data/coin-discovery')
+  })
+
+  it('holds the whole portfolio pillar back from the web', () => {
+    // Owner decision 2026-08-03: Portfolios and Portfolio Builder are both
+    // desktop-only. Their user-data and pricing routes go with them — a saved
+    // portfolio a web reader cannot have has nothing to price.
+    const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
+    expect(shipped).not.toContain('/portfolios')
+    expect(shipped).not.toContain('/portfolio-builder')
+    for (const r of [
+      '/api/user/portfolios',
+      '/api/user/builder-plans',
+      '/live-data/portfolio-prices',
+      '/live-data/portfolio-history',
+    ]) {
+      expect(PREMIUM_DATA_ROUTES, `${r} still served on the web`).toContain(r)
+    }
+  })
+
+  it('holds Staking Discovery back while leaving Staking Opportunities free', () => {
+    const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
+    expect(shipped).not.toContain('/staking-discovery')
+    expect(PREMIUM_DATA_ROUTES).toContain('/live-data/staking-discovery')
+    // The affiliate surface. Distinct route, must survive the prefix above.
+    expect(shipped).toContain('/staking')
+    expect(isPremiumPath('/live-data/staking-rates', PREMIUM_DATA_ROUTES as string[])).toBe(false)
   })
 
   it('never leaves an empty module section in the sidebar', () => {

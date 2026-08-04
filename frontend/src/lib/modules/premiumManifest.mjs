@@ -92,11 +92,31 @@ export const PREMIUM_FEATURES = [
     dataRoutes: ['/api/user/builder-plans'],
     rationale:
       'Already specified as a separately licensed module with its own SKU ' +
-      '(docs/ROADMAP.md, "Portfolio Builder"). ⚠ Caveat: the allocation engine in ' +
+      '(docs/ROADMAP.md, "Portfolio Builder"), and desktop-only alongside ' +
+      'Portfolios above per the 2026-08-03 decision to keep the whole portfolio ' +
+      'pillar off the web. ⚠ Caveat: the allocation engine in ' +
       'lib/data/portfolioBuilder.ts is pure client-side TS today, so excluding it ' +
       'from the web build removes the feature but does not by itself protect the ' +
       'method. Moving buildPortfolio()/reviewPlan() behind a server route is ' +
       'follow-up work before this is genuinely defensible.',
+  },
+  {
+    id: 'portfolios',
+    module: 'core',
+    label: 'Portfolios & Holdings',
+    pageRoutes: ['/portfolios'],
+    navHrefs: ['/portfolios'],
+    dataRoutes: [
+      '/api/user/portfolios',
+      '/live-data/portfolio-prices',
+      '/live-data/portfolio-history',
+    ],
+    rationale:
+      'Owner decision (2026-08-03): the portfolio pillar — this and Portfolio ' +
+      'Builder below — is desktop-only. Holdings, cost basis and P&L are user data ' +
+      'in Postgres behind /api/user/portfolios, so the cut is clean. The two ' +
+      '/live-data/portfolio-* routes go with it: nothing else calls them, they ' +
+      'price a saved portfolio that a web reader cannot have.',
   },
   {
     id: 'budget',
@@ -123,19 +143,10 @@ export const PREMIUM_FEATURES = [
       'that does not belong on an anonymous free website at all, independent of ' +
       'monetisation.',
   },
-  {
-    id: 'coin-discovery',
-    module: 'crypto',
-    label: 'Coin Discovery',
-    pageRoutes: ['/coin-discovery'],
-    navHrefs: ['/coin-discovery'],
-    dataRoutes: ['/live-data/coin-discovery'],
-    rationale:
-      'A server-side scoring pass over live market data — the ranking model is the ' +
-      'product, and it never reaches the browser. The plain Coin Registry stays ' +
-      'free, so the free edition still browses every coin; only the scored ' +
-      'candidate screen is sold.',
-  },
+  // Coin Discovery was proposed premium in the first draft and is deliberately
+  // NOT here: owner decision (2026-08-03) is that it stays free on the web. Its
+  // /live-data/coin-discovery route stays open with it — withholding the data of
+  // a free feature would just break it.
   {
     id: 'staking-discovery',
     module: 'crypto',
@@ -188,8 +199,9 @@ export const PREMIUM_FEATURES = [
     rationale:
       'Full N-PORT holdings retrieval and the quarter-over-quarter diff are server ' +
       'work against SEC EDGAR, feeding the Portfolios look-through tab and the ' +
-      'Compare overlap section. Both host pages stay free and simply lose those ' +
-      'panels, so the free edition degrades gracefully instead of losing a page.',
+      'Compare overlap section. Portfolios is now desktop-only in its own right, so ' +
+      'on the web this cut lands on Compare alone: the page stays free and loses ' +
+      'only its overlap panel, degrading rather than disappearing.',
   },
 ]
 
