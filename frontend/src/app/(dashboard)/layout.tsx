@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { DataStatusBanner } from '@/components/layout/DataStatusBanner'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { PopoutLayer } from '@/components/layout/PopoutLayer'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { AssistantWidget } from '@/components/agents/AssistantWidget'
@@ -66,6 +67,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
           <main role="main">
             <DataStatusBanner />
             <div className="p-4 sm:p-6"><ErrorBoundary>{children}</ErrorBoundary></div>
+            {/* Inside the scroll container, below the content: the disclosure
+                links have to be on every page (BUSINESS-CHECKLIST §3). */}
+            <SiteFooter />
           </main>
         </PullToRefresh>
         <StatusBar />

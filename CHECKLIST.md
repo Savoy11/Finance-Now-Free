@@ -27,10 +27,18 @@ repository and is untouched by anything here.
       means the in-module guards ship their dead branch instead of being minified away. Measured:
       with it set, the watchlist's `/api/user/watchlists` calls vanish from the bundle; unset,
       they remain as unreachable code.
-- [ ] **Legal floor for a public site.** Terms of Service, Privacy Policy, "not investment
-      advice" page, and data-source attribution page, linked from the footer. The requirements
-      list already exists in `docs/BUSINESS-CHECKLIST.md` §3 — this item is rendering them on the
-      site.
+- [ ] **Finish the legal documents.** The scaffolding is built and linked (see done log); what
+      remains is the part software cannot do:
+      1. Fill in `LEGAL_CONFIG` in `frontend/src/lib/legal.ts` — entity name, contact email,
+         jurisdiction, effective date. Until then the pages render visible "not set" gaps.
+      2. Have a lawyer review all six, then flip `reviewed: true` per document in `LEGAL_PAGES`
+         to remove its draft banner. A test currently asserts every document is unreviewed —
+         delete that assertion as you go, deliberately.
+      3. Sections explicitly marked ⚠ need counsel: warranty, liability, IP, governing law and
+         eligibility (terms); statutory rights and change-notification (privacy); complaints
+         escalation (contact); per-provider licence wording (attribution).
+      4. Name the host and its log-retention period in the privacy policy once the deployment
+         target is decided — that paragraph is incomplete without it.
 
 ## P1 — before/shortly after launch
 
@@ -39,6 +47,12 @@ repository and is untouched by anything here.
       `frontend/src/app/(dashboard)/upgrade/page.tsx` — a `url` turns the real call-to-action
       button on, and an optional `priceLabel` renders under it. Until then the page says the
       desktop edition isn't buyable yet, which is true. Nothing else needs changing.
+- [ ] **`/api/auth/session` returns 500 on the web build.** Found while auditing data flows for
+      the privacy policy. `SessionProvider` is mounted in `providers.tsx` and the dashboard layout
+      calls `useSession()`, so every page load fires a request to an endpoint that 500s because
+      `AUTH_SECRET` is unset. Nothing breaks — `useSession()` just reports unauthenticated and the
+      free edition has no login — but it is a failing request per page load and 500s in the logs.
+      Either set `AUTH_SECRET` on the deploy or drop `SessionProvider` from the web build.
 - [ ] **Re-run `npm run audit` from a residential IP** before trusting any "provider is down"
       conclusion reached in cloud sessions (CoinGecko, Reddit, Binance all block datacenter IPs).
 
@@ -63,6 +77,24 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-05 — Legal/disclosure scaffolding built and linked.** All six documents
+      BUSINESS-CHECKLIST §3 requires now exist at `/legal/*` with their own layout, an index, and
+      a `SiteFooter` linking them from every page (plus the one-line "not investment advice"
+      stated inline, since that is the version most readers ever see).
+      Written in two deliberately separate registers: **sections describing how the software
+      behaves are fact**, verified against the code — no analytics package of any kind, no cookies
+      set on a normal page load, watchlists in `localStorage` only, all market data fetched
+      server-side, `/api/v1` request logging (method/path/query/UA/referer), and the one
+      third-party call the browser *does* make (CoinGecko's image CDN for coin logos on Coin
+      Discovery, which sees visitor IPs). **Sections stating legal positions are marked ⚠ DRAFT**
+      for counsel.
+      The attribution page is generated from `BUILD_DATA_SOURCES`, so it lists exactly the sources
+      this build serves and cannot drift — or credit a provider behind a withheld feature.
+      Nothing can pass for finished by accident: every document renders a "not yet reviewed by a
+      lawyer" banner until its `reviewed` flag is flipped, and unset `LEGAL_CONFIG` fields render
+      a visible "not set" chip rather than an empty string. 11 tests cover the document set, the
+      footer mount, the draft banners, and — most importantly — that no `/legal` route can ever be
+      swept into the premium manifest and withheld from the public site that needs it.
 - [x] **2026-08-05 — Videos decision: the whole surface is desktop-only.** Owner call, revising
       the earlier "only AI analysis is premium" line. Investigation found that line was not
       viable regardless: `/live-data/video-search` needs a YouTube Data API key *and* caps itself

@@ -129,6 +129,20 @@ npm run audit          # live-data audit — read REAL vs FALLBACK, not HTTP sta
 
 ---
 
+## Legal & disclosures
+
+The public documents required before launch live at `/legal/*` and are linked from the footer of
+every page: not-investment-advice, privacy, terms, how-we-make-money, data-source attribution, and
+contact. They are **drafts** — each renders a "not yet reviewed by a lawyer" banner until its
+`reviewed` flag is flipped in `frontend/src/lib/legal.ts`, and the owner-supplied identity fields
+(`LEGAL_CONFIG`) render visible gaps until filled in.
+
+Sections describing how the software behaves are written as fact and verified against the code;
+sections stating legal positions are marked as needing counsel. The attribution page is generated
+from the live data-source registry, so it always matches what this build actually calls.
+
+---
+
 ## Data honesty principles
 
 1. Every metric displays its source; derived figures are marked as Finance Now's own computation.
