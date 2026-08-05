@@ -76,16 +76,27 @@ export const PREMIUM_FEATURES = [
       'no pageRoutes of its own; the tab is dropped with the Wallets feature below.',
   },
   {
-    id: 'video-analysis',
+    id: 'videos',
     group: 'ai',
     module: 'core',
-    label: 'AI Video Analysis',
-    pageRoutes: [],
-    navHrefs: [],
-    dataRoutes: ['/live-data/video-analyze'],
+    label: 'Market Videos & AI Analysis',
+    pageRoutes: ['/videos'],
+    navHrefs: ['/videos'],
+    dataRoutes: ['/live-data/videos', '/live-data/video-search', '/live-data/video-analyze'],
     rationale:
-      'The LLM half of /videos. Video search and the feed grid stay free — they are ' +
-      'keyless RSS and a genuine traffic driver; only the paid analysis step is cut.',
+      'Owner decision (2026-08-05): the whole Videos surface is desktop-only, ' +
+      'revising the earlier line that cut only the AI-analysis step.\n' +
+      'The earlier line was not viable. /live-data/video-search needs a YouTube ' +
+      'Data API key AND caps itself at 80 searches per DAY globally (see its ' +
+      'guardQuotaRoute call) — a budget sized for one desktop user, because ' +
+      "YouTube's free tier allows ~100 searches/day and each costs 100 quota " +
+      'units. On a public site a handful of visitors exhaust that and everyone ' +
+      'after them gets a 429, so search was always going to be broken-for-most ' +
+      'rather than free.\n' +
+      'The feed grid alone (/live-data/videos) IS keyless and does scale — the ' +
+      'cut is not forced there. It goes because the owner judged a grid of ' +
+      "third-party YouTube links doesn't earn its place beside the news surfaces " +
+      'the free edition already has, not because it could not be served.',
   },
   {
     id: 'portfolio-builder',

@@ -178,7 +178,7 @@ affiliate revenue. Premium = AI, personal finance, and server-side scoring → s
 |---|---|---|
 | AI Research & Daily Brief | core | `/brief`, `/research`, `/agent-config`, `/api/agents/*` |
 | Pump Report | crypto | `/live-data/pump-report/*` |
-| AI Video Analysis | core | `/live-data/video-analyze` |
+| **Market Videos & AI Analysis** | core | `/videos`, `/live-data/video{s,-search,-analyze}` |
 | **Portfolios & Holdings** | core | `/portfolios`, `/api/user/portfolios`, `/live-data/portfolio-{prices,history}` |
 | **Portfolio Builder** | builder | `/portfolio-builder`, `/api/user/builder-plans` |
 | Budget & Transactions | budget | `/budget/*`, `/api/user/budget/*` |
@@ -262,13 +262,28 @@ bundle-hygiene win, not a security fix.
 Nothing is deleted from the codebase. Every entry above is a **web-build exclusion**; the desktop
 build is unchanged and still contains all of it.
 
+**Owner decision, 2026-08-05 — the whole Videos surface is desktop-only**, revising the earlier
+line that cut only the AI-analysis step.
+
+That earlier line could not have worked. `/live-data/video-search` needs a YouTube Data API key
+*and* caps itself at **80 searches per day globally** (`guardQuotaRoute(..., { limitPerDay: 80 })`)
+— a budget sized for a single desktop user, because YouTube's free tier allows roughly 100
+searches a day and each costs 100 quota units. On a public site a handful of visitors exhaust
+that and everyone after them gets a 429, so "free search" was always going to mean
+"broken for most".
+
+The feed grid alone (`/live-data/videos`) is genuinely keyless and *does* scale — YouTube's
+per-channel Atom feeds, no key, no quota. The cut is not forced there. It goes because the owner
+judged that a grid of third-party YouTube links doesn't earn its place beside the news surfaces
+the free edition already has.
+
 ### Free — everything else
 
 Headlines · Coins registry + detail + Reserve Monitor · Crypto News · **Staking Opportunities**
 (the affiliate surface) · **Coin Discovery** · Crypto TA (minus backtest) · Stock Registry +
 detail · Market News · Equity TA · Calendar · all of Macro (commodities, currencies + converter,
-bonds & rates + yield curve, macro news, macro TA) · Fund Registry + detail · Watchlist · Compare ·
-Videos (search + feed) — all running on hard-coded sources with no configuration surfaces.
+bonds & rates + yield curve, macro news, macro TA) · Fund Registry + detail · Watchlist · Compare —
+all running on hard-coded sources with no configuration surfaces.
 
 The **Data Sources** page is filtered to match (`BUILD_DATA_SOURCES`). It's free, and its whole job
 is an accurate account of where numbers come from — listing "Portfolio prices · Live" for a surface

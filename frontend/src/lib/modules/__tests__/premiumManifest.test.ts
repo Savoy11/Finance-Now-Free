@@ -166,6 +166,28 @@ describe('premium components inside free pages', () => {
   })
 })
 
+describe('videos surface (owner decision 2026-08-05)', () => {
+  it('withholds the page and all three video routes', () => {
+    // Cut as a whole surface, not just the AI step. The earlier line kept
+    // /live-data/video-search free, but that route caps itself at 80 searches
+    // per DAY globally — a one-desktop-user budget that a public site exhausts
+    // almost immediately, so "free" would have meant "429 for most visitors".
+    const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
+    expect(shipped, '/videos still in the sidebar').not.toContain('/videos')
+    expect(isPremiumPath('/videos', PREMIUM_PAGE_ROUTES as string[])).toBe(true)
+    for (const r of ['/live-data/videos', '/live-data/video-search', '/live-data/video-analyze']) {
+      expect(PREMIUM_DATA_ROUTES, `${r} still served on the web`).toContain(r)
+    }
+  })
+
+  it('does not let the /videos prefix swallow the video-* data routes', () => {
+    // '/videos' and '/live-data/videos' are different trees; a sloppy prefix
+    // rule that matched on the bare segment would be a latent trap.
+    expect(isPremiumPath('/live-data/video-search', ['/videos'])).toBe(false)
+    expect(isPremiumPath('/videos', ['/live-data/videos'])).toBe(false)
+  })
+})
+
 describe('upsell grouping on /upgrade', () => {
   it('files every premium feature under a real group', () => {
     // A feature with an unknown group renders nowhere on /upgrade — it would be
@@ -298,9 +320,11 @@ describe('data-source catalogue in a free build', () => {
   })
 
   it('drops a surface whose folded-in sibling route is withheld', () => {
-    // 'videos' covers video-search AND video-analyze; video-analyze is premium.
-    // A surface that keeps claiming full coverage while one of its routes is gone
-    // is the subtler version of the same dishonesty.
+    // The 'videos' row's own route is withheld now that the whole surface is
+    // desktop-only, but it was ALSO dropped before that — its `covers` list
+    // names video-analyze, which was premium on its own. A surface that keeps
+    // claiming full coverage while one of its routes is gone is the subtler
+    // version of the same dishonesty, and that check still has teeth.
     expect(BUILD_DATA_SOURCES.map((e) => e.id)).not.toContain('videos')
   })
 })

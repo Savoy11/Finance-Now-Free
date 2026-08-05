@@ -38,7 +38,7 @@ providers, enters API keys, or configures feeds. What you see is what the site s
 
 | Area | Free surfaces |
 |---|---|
-| **Core** | Headlines (landing feed), Watchlist (saved in your browser — no account needed), Compare (2–6 assets, correlation + overlap-aware), Videos (search + feed) |
+| **Core** | Headlines (landing feed), Watchlist (saved in your browser — no account needed), Compare (2–6 assets, correlation + overlap-aware) |
 | **Crypto** | Coin Registry + coin detail, Reserve Transparency Monitor, crypto news with sentiment, Staking Opportunities (55 providers), Coin Discovery, Technical Analysis (charts, 16+ indicators, patterns, scanner) |
 | **Equities** | Stock Registry + stock detail (SEC filings, XBRL fundamentals), market news, equity TA, market calendar |
 | **Macro** | Commodities, currencies + two-tier FX converter, bonds & rates with the official Treasury yield curve, macro news, macro TA over 45 instruments |
@@ -46,7 +46,7 @@ providers, enters API keys, or configures feeds. What you see is what the site s
 
 ## What ships in Finance Now Desktop instead
 
-AI research agents & Daily Brief · the Assistant chat · Pump Report · AI video analysis ·
+AI research agents & Daily Brief · the Assistant chat · Pump Report · market videos & AI analysis ·
 Portfolios & holdings tracking · Portfolio Builder · Budget & transactions · Wallets & exchange
 connections · Staking Discovery · AI stock outlier scan · strategy backtesting (equities page and
 the crypto TA backtest tab) · fund look-through & holdings overlap · Safety Scores / composite risk

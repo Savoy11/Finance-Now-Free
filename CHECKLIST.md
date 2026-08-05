@@ -39,8 +39,6 @@ repository and is untouched by anything here.
       `frontend/src/app/(dashboard)/upgrade/page.tsx` — a `url` turns the real call-to-action
       button on, and an optional `priceLabel` renders under it. Until then the page says the
       desktop edition isn't buyable yet, which is true. Nothing else needs changing.
-- [ ] **Videos decision.** Currently only the AI-analysis step is premium; search and the feed
-      stay free. Confirm that line or cut the whole surface.
 - [ ] **Re-run `npm run audit` from a residential IP** before trusting any "provider is down"
       conclusion reached in cloud sessions (CoinGecko, Reddit, Binance all block datacenter IPs).
 
@@ -65,6 +63,18 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-05 — Videos decision: the whole surface is desktop-only.** Owner call, revising
+      the earlier "only AI analysis is premium" line. Investigation found that line was not
+      viable regardless: `/live-data/video-search` needs a YouTube Data API key *and* caps itself
+      at **80 searches per day globally**, a one-desktop-user budget (YouTube's free tier is
+      ~100 searches/day at 100 quota units each), so on a public site the 81st visitor onward
+      gets a 429 — "free" would have meant "broken for most". The feed grid alone is genuinely
+      keyless and does scale; it goes because a grid of third-party YouTube links was judged not
+      to earn its place beside the existing news surfaces, not because it couldn't be served.
+      `/videos` plus all three `/live-data/video*` routes are now withheld; the manifest entry
+      widened from `video-analysis` to `videos`. Verified: all three routes 404, `/videos` 307s
+      to `/upgrade?from=/videos` where the upsell names it, no nav entry, and the desktop build
+      restores the page at full size (8.8 kB vs a 394 B stub).
 - [x] **2026-08-05 — `/upgrade` rewritten as real positioning.** Was a flat list of 16 feature
       names under a lock icon — a feature dump, not a pitch. Now: a personalised headline (the
       redirect carries `?from=<route>`, so a reader sent from `/budget` is told *Budget &
