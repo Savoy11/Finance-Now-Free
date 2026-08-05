@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Video, ExternalLink, Clock, Loader2, RefreshCw, Search, X, Coins, LineChart, Globe2, Sparkles, Youtube, AlertCircle, ArrowUpDown } from 'lucide-react'
@@ -286,9 +287,13 @@ export default function VideosPage() {
           <PageHeader
             title="Videos"
             subtitle="Market and crypto video coverage across your bundle"
-            description="Merges keyless YouTube channel feeds into one recency-ranked grid. Only modules enabled in your bundle contribute channels, so the feed changes with your entitlements."
+            description={PREMIUM_BUILD
+              ? "Merges keyless YouTube channel feeds into one recency-ranked grid. Only modules enabled in your bundle contribute channels, so the feed changes with your entitlements."
+              : "Merges keyless YouTube channel feeds into one recency-ranked grid, covering the markets this edition includes."}
             details={[
-              { label: 'Sources', text: 'Channels are managed in Integrations → Video Sources. Built-ins can be toggled, and you can add any YouTube channel by id or feed URL.' },
+              { label: 'Sources', text: PREMIUM_BUILD
+                ? 'Channels are managed in Integrations → Video Sources. Built-ins can be toggled, and you can add any YouTube channel by id or feed URL.'
+                : 'A fixed set of keyless YouTube channel feeds, chosen for market and crypto coverage.' },
               { label: 'Freshness', text: 'Feeds are cached for 10 minutes. Anything published in the last 24h is flagged New.' },
               { label: 'Bundle', text: 'Crypto channels follow the Crypto module; finance channels follow Equities or Funds. Funds has no channels of its own and shares the Markets set.' },
             ]}
@@ -314,10 +319,16 @@ export default function VideosPage() {
       {!cryptoOn && !marketsOn && (
         <div className="flex flex-col items-center justify-center py-16 text-text-muted text-center">
           <Video size={36} className="mb-3 opacity-30" aria-hidden />
-          <p className="text-sm">No video-carrying modules are enabled in your bundle.</p>
-          <Link href="/settings" className="mt-3 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors">
-            Open Integrations
-          </Link>
+          <p className="text-sm">
+            {PREMIUM_BUILD
+              ? 'No video-carrying modules are enabled in your bundle.'
+              : 'No videos are available right now.'}
+          </p>
+          {PREMIUM_BUILD && (
+            <Link href="/settings" className="mt-3 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors">
+              Open Integrations
+            </Link>
+          )}
         </div>
       )}
 
@@ -430,11 +441,15 @@ export default function VideosPage() {
               <AlertCircle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" aria-hidden />
               <p className="text-xs text-text-secondary leading-relaxed">
                 {!searchConfigured ? (
-                  <>
-                    Whole-of-YouTube search needs a YouTube Data API key. Add one under{' '}
-                    <Link href="/settings" className="text-accent-blue hover:underline">Integrations → Market Video Sources</Link>.
-                    The channel feeds above keep working without it.
-                  </>
+                  PREMIUM_BUILD ? (
+                    <>
+                      Whole-of-YouTube search needs a YouTube Data API key. Add one under{' '}
+                      <Link href="/settings" className="text-accent-blue hover:underline">Integrations → Market Video Sources</Link>.
+                      The channel feeds above keep working without it.
+                    </>
+                  ) : (
+                    <>Whole-of-YouTube search isn&rsquo;t available in the free web edition. The channel feeds above keep working.</>
+                  )
                 ) : searchQuery.data?.error}
               </p>
             </div>

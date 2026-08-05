@@ -401,7 +401,12 @@ export function sourcesForModule(module: DataSourceEntry['module']): DataSourceE
  * Entries with no route at all are reference-data rows and always survive.
  */
 export const BUILD_DATA_SOURCES: DataSourceEntry[] = DATA_SOURCES.filter((e) => {
-  if (e.route && !isDataRouteAvailable(e.route.replace(/\/\*$/, ''))) return false
+  // `route` is prose, not a single path: some entries name two routes
+  // ("/a + /b") or annotate one ("/a (drift monitoring)"). Passing the whole
+  // string to isDataRouteAvailable() matched nothing and quietly kept the row —
+  // so extract every path token and require ALL of them to be served.
+  const paths = (e.route ?? '').split(/\s+/).filter((t) => t.startsWith('/')).map((t) => t.replace(/\/\*$/, ''))
+  if (!paths.every(isDataRouteAvailable)) return false
   return (e.covers ?? []).every((c) => isDataRouteAvailable(`/live-data/${c}`))
 })
 

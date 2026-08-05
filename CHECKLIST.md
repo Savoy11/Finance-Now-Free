@@ -17,7 +17,8 @@ repository and is untouched by anything here.
 - [ ] **Owner review of the full free/premium split on a running build.** Every cut so far is
       decided and implemented, but nobody has clicked through the free edition end-to-end. Walk
       every nav entry, confirm nothing renders a dead panel, empty column, or link into a
-      premium route. (The known link-shaped leftovers are listed as P1 polish below.)
+      premium route. (The automated sweep is done and verified against served HTML — see the
+      done log — but it can only catch what it knows to grep for.)
 - [ ] **Deployment target + pipeline.** Where the free site actually runs (Vercel / VPS / other),
       and `FN_ADMIN_TOKEN` set so the admin-guarded routes stay locked on a public host.
       **Set `NEXT_PUBLIC_FN_DISTRIBUTION=web` explicitly.** Leaving it unset still produces the
@@ -36,10 +37,6 @@ repository and is untouched by anything here.
 - [ ] **`/upgrade` positioning copy.** The page currently lists premium feature names. It needs
       real copy about Finance Now Desktop, pricing (when it exists), and a download/purchase
       link. It is the only conversion surface the free edition has.
-- [ ] **Sweep copy that points at removed surfaces.** Known instances: the crypto News page's
-      empty-state says "Add a news source in Integrations" (Integrations is premium now);
-      ModuleGate's lock notice links to `/settings`; the popout "Avg Safety Score" stat renders
-      N/A on the web. None break anything — they just reference doors that no longer exist.
 - [ ] **Videos decision.** Currently only the AI-analysis step is premium; search and the feed
       stay free. Confirm that line or cut the whole surface.
 - [ ] **Trim `/api/v1` discovery + OpenAPI spec to free-edition truth.** The discovery route and
@@ -69,6 +66,25 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-04 — Swept copy and links pointing at removed surfaces.** Verified by fetching
+      every free page from a running web build and grepping the served HTML: zero references to
+      `/settings`, `/data-sources`, "Integrations", "Pump Report", "Risk History" or "Analyze
+      with AI" across 15 pages, with the desktop build keeping all of it. Beyond copy, the sweep
+      caught **three premium features still mounted on free pages** — the coin-detail Pump Report
+      and Risk History tabs, and the Stock Registry's AI Outlier Scan panel — each of which would
+      have opened onto a 404'd route, plus the equity-detail "Analyze with AI" button linking
+      into premium `/research`.
+- [x] **2026-08-04 — Fixed a real break the sweep exposed: `/live-data/portfolio-prices`.**
+      Despite the name it is the generic CoinGecko spot-price endpoint, and three FREE surfaces
+      call it (Watchlist, market-overview popout, price-alert monitor). Withholding it with the
+      portfolio pillar silently broke crypto pricing on the free Watchlist while stocks kept
+      working. Now free again; `/live-data/portfolio-history` stays withheld. The original
+      consumer search missed it because the `grep -v "live-data/portfolio"` filter meant to skip
+      the route's own files also excluded every caller using the full path — judge a route by its
+      callers, not its name. Pinned by test.
+- [x] **2026-08-04 — Fixed `BUILD_DATA_SOURCES` silently keeping composite-route rows.** Entries
+      whose `route` is prose ("/a + /b", "/a (drift monitoring)") never matched the manifest, so
+      they survived the filter. Now every path token in the string must be served.
 - [x] **2026-08-04 — Watchlist is localStorage-only on the web** (owner decision, closing the
       auth-story P0). The store keeps one interface and switches backend at build time: Postgres
       on desktop, `localStorage` on the web. No sign-up, no shared-account hazard, and no

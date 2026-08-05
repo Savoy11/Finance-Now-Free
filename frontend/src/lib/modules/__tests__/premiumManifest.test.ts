@@ -10,7 +10,7 @@ import {
   isPremiumPath,
 } from '../premiumManifest.mjs'
 import { MODULES, BUILD_MODULES } from '../registry'
-import { BUILD_DATA_SOURCES } from '@/lib/data/dataSources'
+import { BUILD_DATA_SOURCES, DATA_SOURCES } from '@/lib/data/dataSources'
 import { DISTRIBUTION, PREMIUM_BUILD } from '@/lib/distribution'
 
 // The free/premium split is a security boundary, not a preference: a mistake here
@@ -169,8 +169,23 @@ describe('data-source catalogue in a free build', () => {
     // where numbers come from. Listing "Portfolio prices · Live" for a surface
     // this build cannot serve makes it a liar.
     const ids = BUILD_DATA_SOURCES.map((e) => e.id)
-    for (const id of ['portfolio-prices', 'portfolio-history', 'wallet']) {
+    for (const id of ['portfolio-history', 'wallet', 'risk-scores']) {
       expect(ids, `withheld surface "${id}" still listed`).not.toContain(id)
+    }
+  })
+
+  it('parses composite route strings when deciding what to list', () => {
+    // Several entries name two routes ("/a + /b") or annotate one
+    // ("/a (drift monitoring)"). Matching the whole string against the manifest
+    // matched nothing and quietly kept the row — the 'builder' surface names a
+    // withheld route this way and must not survive.
+    const ids = BUILD_DATA_SOURCES.map((e) => e.id)
+    const composite = DATA_SOURCES.filter((e) => (e.route ?? '').includes(' + '))
+    expect(composite.length, 'no composite-route entries left to guard').toBeGreaterThan(0)
+    for (const e of composite) {
+      const paths = (e.route ?? '').split(/\s+/).filter((t) => t.startsWith('/'))
+      const allServed = paths.every((pth) => !isPremiumPath(pth, PREMIUM_DATA_ROUTES as string[]))
+      expect(ids.includes(e.id), `"${e.id}" listed:${ids.includes(e.id)} but served:${allServed}`).toBe(allServed)
     }
   })
 
@@ -259,14 +274,17 @@ describe('registry filtering in a free build', () => {
     const shipped = BUILD_MODULES.flatMap((m) => m.navItems.map((i) => i.href))
     expect(shipped).not.toContain('/portfolios')
     expect(shipped).not.toContain('/portfolio-builder')
-    for (const r of [
-      '/api/user/portfolios',
-      '/api/user/builder-plans',
-      '/live-data/portfolio-prices',
-      '/live-data/portfolio-history',
-    ]) {
+    for (const r of ['/api/user/portfolios', '/api/user/builder-plans', '/live-data/portfolio-history']) {
       expect(PREMIUM_DATA_ROUTES, `${r} still served on the web`).toContain(r)
     }
+    // ⚠ /live-data/portfolio-prices must stay FREE despite the name: it is the
+    // generic CoinGecko spot-price endpoint behind the free Watchlist, the
+    // market-overview popout, and the price-alert monitor. Withholding it broke
+    // crypto pricing on the free Watchlist (caught 2026-08-04) while stocks kept
+    // working, which is exactly the kind of half-broken surface that is hard to
+    // spot. Judge a route by its callers, not its name.
+    expect(PREMIUM_DATA_ROUTES).not.toContain('/live-data/portfolio-prices')
+    expect(isPremiumPath('/live-data/portfolio-prices', PREMIUM_DATA_ROUTES as string[])).toBe(false)
   })
 
   it('holds Staking Discovery back while leaving Staking Opportunities free', () => {

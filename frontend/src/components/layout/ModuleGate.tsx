@@ -5,6 +5,7 @@ import { Lock } from 'lucide-react'
 import type { ModuleId } from '@/lib/modules/registry'
 import { MODULES } from '@/lib/modules/registry'
 import { useEntitlementStore } from '@/store/useEntitlementStore'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 
 // Wraps a module's pages so a disabled module shows an unlock notice instead
 // of its content. Client-side only for now — becomes a server-side entitlement
@@ -24,15 +25,35 @@ export function ModuleGate({ module, children }: { module: ModuleId; children: R
       <p className="mt-3 text-sm font-medium text-text-primary">
         The {meta?.label ?? module} module is disabled
       </p>
-      <p className="mt-1 text-xs text-text-muted leading-relaxed">
-        Re-enable it under Integrations → Modules to access these pages.
-      </p>
-      <Link
-        href="/settings"
-        className="inline-block mt-4 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors"
-      >
-        Open Integrations
-      </Link>
+      {/* The module toggles live on the Integrations page, which is desktop-only
+          — so on the web there is nowhere to send the reader. In practice a free
+          build cannot reach this state at all (with no toggles, nothing can
+          disable a module), but the copy has to be honest if it ever does. */}
+      {PREMIUM_BUILD ? (
+        <>
+          <p className="mt-1 text-xs text-text-muted leading-relaxed">
+            Re-enable it under Integrations → Modules to access these pages.
+          </p>
+          <Link
+            href="/settings"
+            className="inline-block mt-4 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Open Integrations
+          </Link>
+        </>
+      ) : (
+        <>
+          <p className="mt-1 text-xs text-text-muted leading-relaxed">
+            This section isn&rsquo;t available in the free web edition.
+          </p>
+          <Link
+            href="/headlines"
+            className="inline-block mt-4 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Back to Headlines
+          </Link>
+        </>
+      )}
     </div>
   )
 }

@@ -108,15 +108,22 @@ export const PREMIUM_FEATURES = [
     navHrefs: ['/portfolios'],
     dataRoutes: [
       '/api/user/portfolios',
-      '/live-data/portfolio-prices',
       '/live-data/portfolio-history',
+      // ⚠ /live-data/portfolio-prices is deliberately NOT here. Despite the
+      // name it is the generic CoinGecko spot-price endpoint, and three FREE
+      // surfaces call it through lib/api/instrumentPrices.ts: the Watchlist,
+      // the market-overview popout, and the price-alert monitor. Withholding it
+      // silently broke crypto pricing on the free Watchlist while stocks (on
+      // /live-data/security-quotes) kept working — caught 2026-08-04. Judge a
+      // route by its callers, not its name. /live-data/portfolio-history really
+      // is portfolios-only and stays withheld.
     ],
     rationale:
       'Owner decision (2026-08-03): the portfolio pillar — this and Portfolio ' +
       'Builder below — is desktop-only. Holdings, cost basis and P&L are user data ' +
-      'in Postgres behind /api/user/portfolios, so the cut is clean. The two ' +
-      '/live-data/portfolio-* routes go with it: nothing else calls them, they ' +
-      'price a saved portfolio that a web reader cannot have.',
+      'in Postgres behind /api/user/portfolios, so the cut is clean, and the ' +
+      'history route goes with it since only the portfolios page charts a saved ' +
+      'portfolio over time.',
   },
   {
     id: 'budget',

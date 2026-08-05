@@ -70,13 +70,19 @@ import { Loader2 } from 'lucide-react'
 
 type Tab = 'overview' | 'news' | 'technical-analysis' | 'reserves' | 'risk-history' | 'pump-report'
 
+// Risk History and Pump Report are desktop-only. Risk History charts the
+// composite score (risk-scores in the premium manifest) and Pump Report runs an
+// LLM agent against /live-data/pump-report, which the web build 404s — both
+// would be tabs that open onto a permanent error. Filtered rather than disabled
+// so the free build shows four working tabs instead of six with two dead ends.
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
   { id: 'news', label: 'News' },
   { id: 'technical-analysis', label: 'Technical Analysis' },
   { id: 'reserves', label: 'Reserves' },
-  { id: 'risk-history', label: 'Risk History' },
-  { id: 'pump-report', label: 'Pump Report' },
+  ...(PREMIUM_BUILD
+    ? ([{ id: 'risk-history', label: 'Risk History' }, { id: 'pump-report', label: 'Pump Report' }] as Array<{ id: Tab; label: string }>)
+    : []),
 ]
 
 // Asset IDs supported by the TA chart
@@ -788,7 +794,9 @@ function NewsTab({ assetId }: { assetId: string }) {
 
   if (noProviders) {
     return (
-      <LiveUnavailable message="No news sources are configured. Add a news source in Integrations to see live news for this asset." />
+      <LiveUnavailable message={PREMIUM_BUILD
+        ? 'No news sources are configured. Add a news source in Integrations to see live news for this asset.'
+        : 'Live news is unavailable for this asset right now.'} />
     )
   }
 
@@ -1344,12 +1352,12 @@ function AssetDetailPageInner() {
             <ReservesTab asset={asset} />
           </ErrorBoundary>
         )}
-        {activeTab === 'risk-history' && (
+        {PREMIUM_BUILD && activeTab === 'risk-history' && (
           <ErrorBoundary>
             <HistoricalScoreChart assetId={asset.id} assetSymbol={asset.symbol} />
           </ErrorBoundary>
         )}
-        {activeTab === 'pump-report' && (
+        {PREMIUM_BUILD && activeTab === 'pump-report' && (
           <ErrorBoundary>
             <PumpReportTab
               targets={[{ type: 'coin', id: asset.id, label: `${asset.name} (${asset.symbol})` }]}

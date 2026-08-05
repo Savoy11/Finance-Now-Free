@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { useQuery } from '@tanstack/react-query'
 import { CalendarDays, KeyRound, Landmark } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -56,13 +57,21 @@ function CalendarContent() {
       ) : !data?.configured ? (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
           <KeyRound className="mx-auto h-7 w-7 text-amber-400/70" aria-hidden />
-          <p className="mt-2 text-sm font-medium text-slate-200">Calendar needs a (free) FMP API key</p>
+          <p className="mt-2 text-sm font-medium text-slate-200">
+            {PREMIUM_BUILD ? 'Calendar needs a (free) FMP API key' : 'Calendar data is unavailable'}
+          </p>
           <p className="mt-1 text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-            Earnings and economic calendars come from Financial Modeling Prep. Grab a free key at
-            financialmodelingprep.com, then add it in{' '}
-            <a href="/settings" className="text-accent-blue hover:underline">Settings → Integrations → Equity Market Data</a>{' '}
-            (Financial Modeling Prep) — or set <code className="font-mono text-slate-300">FMP_API_KEY</code> in{' '}
-            <code className="font-mono text-slate-300">frontend/.env.local</code>. The same key upgrades stock quotes suite-wide.
+            {PREMIUM_BUILD ? (
+              <>
+                Earnings and economic calendars come from Financial Modeling Prep. Grab a free key at
+                financialmodelingprep.com, then add it in{' '}
+                <a href="/settings" className="text-accent-blue hover:underline">Settings → Integrations → Equity Market Data</a>{' '}
+                (Financial Modeling Prep) — or set <code className="font-mono text-slate-300">FMP_API_KEY</code> in{' '}
+                <code className="font-mono text-slate-300">frontend/.env.local</code>. The same key upgrades stock quotes suite-wide.
+              </>
+            ) : (
+              <>Earnings and economic calendars come from a market-data provider this deployment has no key for, so there is nothing to show rather than something invented.</>
+            )}
           </p>
         </div>
       ) : (
