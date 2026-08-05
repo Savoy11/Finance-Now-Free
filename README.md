@@ -69,6 +69,8 @@ The split is a **build-time distribution flag**, not a runtime permission — fu
 3. **URLs** redirect to `/upgrade`; **nav entries** never render.
 4. Premium components inside free pages (the backtest tab, the assistant chat, the tier switch)
    are replaced by empty stubs via module substitution.
+5. The public `/api/v1` discovery document and OpenAPI spec are filtered to the endpoints this
+   build actually serves, so a caller is never told to call a route that 404s.
 
 The flag **fails closed**: any deploy that forgets `NEXT_PUBLIC_FN_DISTRIBUTION` produces the free
 edition, never an accidental public release of the paid product.

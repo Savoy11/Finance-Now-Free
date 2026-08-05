@@ -39,9 +39,6 @@ repository and is untouched by anything here.
       link. It is the only conversion surface the free edition has.
 - [ ] **Videos decision.** Currently only the AI-analysis step is premium; search and the feed
       stay free. Confirm that line or cut the whole surface.
-- [ ] **Trim `/api/v1` discovery + OpenAPI spec to free-edition truth.** The discovery route and
-      `openapi.json` still advertise `transfer/routes`, `exchanges`, and `network-fees`, which now
-      404 on the web. The docs should describe the API a caller actually gets.
 - [ ] **Re-run `npm run audit` from a residential IP** before trusting any "provider is down"
       conclusion reached in cloud sessions (CoinGecko, Reddit, Binance all block datacenter IPs).
 
@@ -66,6 +63,22 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-05 — `/api/v1` discovery and OpenAPI spec trimmed to free-edition truth.** Both
+      documents now derive from the premium manifest, so they cannot drift from what middleware
+      serves. Web: 7 endpoints (was 10), spec down to 7 paths / 5 tags / 9 schemas; discovery
+      gains an `edition` field and drops `supported_networks`, which only ever described the
+      withheld transfer/exchange/network-fee endpoints. Pruning is transitive and verified
+      internally consistent — `CurveSnapshot` is referenced by no path, only by
+      `YieldCurveResponse`, and a single-pass filter would have dropped it and left a spec with
+      an unresolved `$ref`; the served document has none. Orphaned tags go too, since Swagger UI
+      renders them as empty sections. Desktop still serves all 10 paths / 7 tags / 12 schemas.
+      3 tests pin the endpoint classification, including that `/api/v1/transfer/routes` is caught
+      by the `/api/v1/transfer` parent prefix and that `/api/v1/staking` stays free even though
+      `/live-data/staking-discovery` doesn't.
+      ⚠ Follow-up noted, not done: the `mcp-server/` tools `find_transfer_routes`,
+      `list_exchanges` and `get_network_fees` call those withheld endpoints. That server ships
+      with the desktop product and points at a local instance by default, so nothing is broken
+      today — but pointed at the public site those three tools would 404.
 - [x] **2026-08-04 — Swept copy and links pointing at removed surfaces.** Verified by fetching
       every free page from a running web build and grepping the served HTML: zero references to
       `/settings`, `/data-sources`, "Integrations", "Pump Report", "Risk History" or "Analyze

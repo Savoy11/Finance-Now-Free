@@ -47,7 +47,7 @@ care about.
 
 ## The mechanism
 
-One build-time flag, one manifest, four enforcement points.
+One build-time flag, one manifest, six enforcement points.
 
 ```
 NEXT_PUBLIC_FN_DISTRIBUTION = web | desktop      (default: web — fails closed)
@@ -68,7 +68,7 @@ Every entry declares **both halves** of its feature — `pageRoutes` *and* `data
 only the page is not protection: a deployed `/live-data` handler can be curled whether or not any
 UI links to it.
 
-### Four enforcement points
+### Six enforcement points
 
 | # | Layer | File | What it stops |
 |---|-------|------|---------------|
@@ -77,6 +77,7 @@ UI links to it.
 | 3 | **Server** | `src/middleware.ts` | 404s every premium data route, before the handler runs. **This is the layer that actually holds** — no request, header, or cookie can turn a build-time constant off. |
 | 4 | **Nav** | `src/lib/modules/registry.ts` → `BUILD_MODULES` | Premium sidebar entries don't render, and no empty module header is left behind. |
 | 5 | **Component** | `next.config.mjs` → `PREMIUM_COMPONENTS` | Swaps a premium component *inside a free page* for a stub with the same exports, so its engine is imported by nothing and drops out. |
+| 6 | **Public docs** | `/api/v1` + `/api/v1/openapi.json` | Discovery and the OpenAPI spec are filtered to the endpoints this build serves, so a caller is never told to call a route middleware 404s. |
 
 ### Point 5: features that own no route
 
@@ -92,6 +93,23 @@ page no longer resolves to cannot ship whatever it imported. `BacktestPanel` was
 
 `src/lib/server/premiumGuard.ts` (`premiumOnly()`) covers the case middleware can't express: a
 one-off premium handler sitting inside an otherwise-free subtree.
+
+### Point 6: the published API contract
+
+Middleware already makes a withheld endpoint unreachable, but a spec that still lists it makes
+every generated client and every agent reading it wrong — in a way that only surfaces as a 404 at
+call time. Both documents are therefore derived from the manifest rather than hand-maintained.
+
+Three things have to be pruned together or the document is merely shorter rather than correct:
+the **paths**, the **tags** only those paths used (Swagger UI renders orphans as empty sections),
+and the **schemas** only those paths referenced. Schema pruning is **transitive** — a kept schema
+can `$ref` another (`YieldCurveResponse` → `CurveSnapshot`), so a single pass would drop one that
+is still needed and publish a spec with an unresolved `$ref`. The filter iterates to a fixpoint;
+the served document is verified to have no unresolved references.
+
+Discovery additionally drops `supported_networks` in the free build, since network ids were only
+ever a parameter of the withheld transfer/exchange/network-fee endpoints, and adds an `edition`
+field (`web-free` | `desktop`) so a consumer can tell the two apart.
 
 ### Verified
 

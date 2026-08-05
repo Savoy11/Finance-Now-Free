@@ -163,6 +163,45 @@ describe('premium components inside free pages', () => {
   })
 })
 
+describe('public /api/v1 documents in a free build', () => {
+  // Discovery and the OpenAPI spec are a contract. A withheld endpoint left in
+  // either one makes every generated client and every agent reading it wrong, in
+  // a way that only surfaces as a 404 at call time.
+  const WITHHELD = ['/api/v1/exchanges', '/api/v1/network-fees', '/api/v1/transfer/routes']
+  const SERVED = [
+    '/api/v1/prices',
+    '/api/v1/staking/opportunities',
+    '/api/v1/news',
+    '/api/v1/securities/quotes',
+    '/api/v1/securities/history',
+    '/api/v1/macro/yield-curve',
+    '/api/v1/macro/fx-rates',
+  ]
+
+  it('classifies every documented endpoint the way the manifest does', () => {
+    for (const p of WITHHELD) {
+      expect(isPremiumPath(p, PREMIUM_DATA_ROUTES as string[]), `${p} should be withheld`).toBe(true)
+    }
+    for (const p of SERVED) {
+      expect(isPremiumPath(p, PREMIUM_DATA_ROUTES as string[]), `${p} should stay free`).toBe(false)
+    }
+  })
+
+  it('covers /transfer/routes through the /api/v1/transfer prefix', () => {
+    // The manifest lists the parent prefix, not the leaf. If that stopped
+    // matching, discovery would advertise a route middleware 404s.
+    expect(PREMIUM_DATA_ROUTES).toContain('/api/v1/transfer')
+    expect(isPremiumPath('/api/v1/transfer/routes', PREMIUM_DATA_ROUTES as string[])).toBe(true)
+  })
+
+  it('keeps /api/v1/staking free even though /staking-discovery is withheld', () => {
+    // Different features that read alike. The staking *page* is the free
+    // affiliate surface; only the discovery scorer is desktop-only.
+    expect(isPremiumPath('/api/v1/staking/opportunities', PREMIUM_DATA_ROUTES as string[])).toBe(false)
+    expect(PREMIUM_DATA_ROUTES).toContain('/live-data/staking-discovery')
+  })
+})
+
 describe('data-source catalogue in a free build', () => {
   it('does not advertise feeds behind withheld features', () => {
     // The Data Sources page is free and its whole job is an accurate account of
