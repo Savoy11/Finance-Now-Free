@@ -19,7 +19,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { clsx } from 'clsx'
-import { useSession } from 'next-auth/react'
+import { useAuthSession } from '@/lib/auth/useAuthSession'
 import { useAlertStore } from '@/store/useAlertStore'
 import { useFeedStore, type FeedStatus } from '@/store/useFeedStore'
 import { useEntitlementStore } from '@/store/useEntitlementStore'
@@ -177,7 +177,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const { unreadCount } = useAlertStore()
   const feedStatus = useFeedStore((s) => s.status)
   const feedFailedCount = useFeedStore((s) => s.failedCount)
-  const { data: session } = useSession()
+  const { data: session } = useAuthSession()
   const user = session?.user
   const isEnabled = useEntitlementStore((s) => s.isEnabled)
 

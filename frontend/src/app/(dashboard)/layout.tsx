@@ -11,7 +11,7 @@ import { PopoutLayer } from '@/components/layout/PopoutLayer'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { AssistantWidget } from '@/components/agents/AssistantWidget'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { useSession }       from 'next-auth/react'
+import { useAuthSession }   from '@/lib/auth/useAuthSession'
 import { useFeedStatus }    from '@/lib/feed/useFeedStatus'
 import { useRecentAlerts }  from '@/hooks/useAlerts'
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh'
@@ -83,7 +83,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { status } = useSession()
+  const { status } = useAuthSession()
 
   // 'loading' is deliberately not treated as unauthenticated: the session is
   // fetched after mount, so redirecting on it would bounce a signed-in user to

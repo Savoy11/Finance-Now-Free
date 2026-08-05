@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SessionProvider } from 'next-auth/react'
+import { AUTH_ENABLED } from '@/lib/auth/useAuthSession'
 import { Toaster } from 'react-hot-toast'
 import { GC_TIME, STALE_TIME_SHORT } from '@/lib/constants'
 import { useEntitlementStore } from '@/store/useEntitlementStore'
@@ -61,8 +62,14 @@ export function Providers({ children }: { children: ReactNode }) {
   // While the auth wall is off this resolves to `null` for every visitor and
   // DB-backed features fall through to local-user mode — see
   // lib/auth/session.ts.
-  return (
-    <SessionProvider>
+  //
+  // Mounted only where auth exists. On the free web edition there is no sign-in
+  // and no AUTH_SECRET, so the provider's poll of /api/auth/session 500'd on
+  // every page load for a session that could never exist. Consumers read the
+  // session through useAuthSession(), which supplies a static unauthenticated
+  // result when the provider is absent — next-auth's own useSession() throws
+  // outside a provider, so that indirection is what makes this safe.
+  const tree = (
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster
@@ -83,6 +90,7 @@ export function Providers({ children }: { children: ReactNode }) {
           }}
         />
       </QueryClientProvider>
-    </SessionProvider>
   )
+
+  return AUTH_ENABLED ? <SessionProvider>{tree}</SessionProvider> : tree
 }

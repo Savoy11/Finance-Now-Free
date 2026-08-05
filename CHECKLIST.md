@@ -47,12 +47,6 @@ repository and is untouched by anything here.
       `frontend/src/app/(dashboard)/upgrade/page.tsx` — a `url` turns the real call-to-action
       button on, and an optional `priceLabel` renders under it. Until then the page says the
       desktop edition isn't buyable yet, which is true. Nothing else needs changing.
-- [ ] **`/api/auth/session` returns 500 on the web build.** Found while auditing data flows for
-      the privacy policy. `SessionProvider` is mounted in `providers.tsx` and the dashboard layout
-      calls `useSession()`, so every page load fires a request to an endpoint that 500s because
-      `AUTH_SECRET` is unset. Nothing breaks — `useSession()` just reports unauthenticated and the
-      free edition has no login — but it is a failing request per page load and 500s in the logs.
-      Either set `AUTH_SECRET` on the deploy or drop `SessionProvider` from the web build.
 - [ ] **Re-run `npm run audit` from a residential IP** before trusting any "provider is down"
       conclusion reached in cloud sessions (CoinGecko, Reddit, Binance all block datacenter IPs).
 
@@ -77,6 +71,29 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-05 — Auth.js no longer mounted on the web build.** Fixes the failing
+      `/api/auth/session` request on every page load: the free edition has no sign-in, no user
+      table and a localStorage watchlist, so `SessionProvider` was polling an endpoint that 500s
+      for want of `AUTH_SECRET`. It is now mounted only on the desktop build, and all three
+      consumers (`providers.tsx`, `Sidebar`, the dashboard layout) read through a new
+      `useAuthSession()` wrapper.
+      That wrapper is load-bearing, not tidiness: outside a `<SessionProvider>` next-auth's
+      `useSession()` throws in development, and in production the guard is compiled out so it
+      returns `undefined` and throws a TypeError at the caller's destructuring. Simply deleting
+      the provider would have crashed the sidebar and the layout on the one build nobody runs
+      locally. The wrapper binds its implementation once at module load, so it is never a
+      conditional hook call. 4 tests, including a source-text check that no component imports
+      `useSession` directly again.
+      Verified: zero `api/auth` references in served pages, all pages 200 on both builds.
+      ⚠ Residue, measured and not fixed: next-auth's **client runtime still ships in the web
+      bundle** (`_getSession` is present in one chunk on both builds), because `providers.tsx`
+      imports `SessionProvider` at module level and an ESM import keeps the module in the graph
+      even when the only use is behind a folded-away branch. This is the same "hides code, does
+      not remove it" caveat documented on `PREMIUM_BUILD`. The behaviour bug is fixed; removing
+      the dead weight would need module substitution like `PREMIUM_COMPONENTS`, which was judged
+      not worth new machinery for one module. (An earlier note in this session claimed the code
+      was gone from the web bundle — that was wrong, based on grepping for an error string that
+      is stripped in production regardless.)
 - [x] **2026-08-05 — Legal/disclosure scaffolding built and linked.** All six documents
       BUSINESS-CHECKLIST §3 requires now exist at `/legal/*` with their own layout, an index, and
       a `SiteFooter` linking them from every page (plus the one-line "not investment advice"
