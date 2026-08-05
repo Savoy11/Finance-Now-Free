@@ -34,9 +34,11 @@ repository and is untouched by anything here.
 
 ## P1 — before/shortly after launch
 
-- [ ] **`/upgrade` positioning copy.** The page currently lists premium feature names. It needs
-      real copy about Finance Now Desktop, pricing (when it exists), and a download/purchase
-      link. It is the only conversion surface the free edition has.
+- [ ] **Fill in the desktop offer on `/upgrade`.** The page is written and shipped; it just has
+      no product to point at yet. Set `DESKTOP_OFFER` at the top of
+      `frontend/src/app/(dashboard)/upgrade/page.tsx` — a `url` turns the real call-to-action
+      button on, and an optional `priceLabel` renders under it. Until then the page says the
+      desktop edition isn't buyable yet, which is true. Nothing else needs changing.
 - [ ] **Videos decision.** Currently only the AI-analysis step is premium; search and the feed
       stay free. Confirm that line or cut the whole surface.
 - [ ] **Re-run `npm run audit` from a residential IP** before trusting any "provider is down"
@@ -63,6 +65,17 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-05 — `/upgrade` rewritten as real positioning.** Was a flat list of 16 feature
+      names under a lock icon — a feature dump, not a pitch. Now: a personalised headline (the
+      redirect carries `?from=<route>`, so a reader sent from `/budget` is told *Budget &
+      Transactions is part of Finance Now Desktop* and that feature is highlighted in its group),
+      the paid set grouped into four value themes rather than sixteen bullets, a "free on this
+      site, and staying free" section derived from `BUILD_MODULES` so it cannot drift, and a
+      disclaimer. Groups live in the manifest (`PREMIUM_GROUPS`), so a newly withheld feature
+      cannot silently miss the upsell — 6 tests pin grouping, exhaustiveness, and `?from=`
+      resolution including nested paths and unknown values. Fixed a stale claim while here: the
+      old copy told readers the transfer-fee calculator was free, which stopped being true on
+      2026-08-04. Verified the user-controllable `?from=` value is never reflected into the page.
 - [x] **2026-08-05 — `/api/v1` discovery and OpenAPI spec trimmed to free-edition truth.** Both
       documents now derive from the premium manifest, so they cannot drift from what middleware
       serves. Web: 7 endpoints (was 10), spec down to 7 paths / 5 tags / 9 schemas; discovery

@@ -39,6 +39,7 @@
  * @property {string}   id          Stable identifier — used in URLs and telemetry.
  * @property {string}   module      Owning module id from lib/modules/registry.
  * @property {string}   label       Human name, shown on the upsell surface.
+ * @property {string}   group       Which PREMIUM_GROUPS bucket the upsell page files it under.
  * @property {string[]} pageRoutes  Page routes removed from the web build.
  * @property {string[]} dataRoutes  Server handlers removed from the web build.
  * @property {string[]} navHrefs    Sidebar hrefs to drop (usually ⊆ pageRoutes).
@@ -49,6 +50,7 @@
 export const PREMIUM_FEATURES = [
   {
     id: 'ai-suite',
+    group: 'ai',
     module: 'core',
     label: 'AI Research & Daily Brief',
     pageRoutes: ['/brief', '/research', '/agent-config'],
@@ -62,6 +64,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'pump-report',
+    group: 'ai',
     module: 'crypto',
     label: 'Pump Report',
     pageRoutes: [],
@@ -74,6 +77,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'video-analysis',
+    group: 'ai',
     module: 'core',
     label: 'AI Video Analysis',
     pageRoutes: [],
@@ -85,6 +89,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'portfolio-builder',
+    group: 'money',
     module: 'builder',
     label: 'Portfolio Builder',
     pageRoutes: ['/portfolio-builder'],
@@ -102,6 +107,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'portfolios',
+    group: 'money',
     module: 'core',
     label: 'Portfolios & Holdings',
     pageRoutes: ['/portfolios'],
@@ -127,6 +133,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'budget',
+    group: 'money',
     module: 'budget',
     label: 'Budget & Transactions',
     pageRoutes: ['/budget'],
@@ -139,6 +146,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'wallets',
+    group: 'money',
     module: 'crypto',
     label: 'Wallets & Exchange Connections',
     pageRoutes: ['/wallets'],
@@ -156,6 +164,7 @@ export const PREMIUM_FEATURES = [
   // a free feature would just break it.
   {
     id: 'crypto-social',
+    group: 'analysis',
     module: 'crypto',
     label: 'Crypto Social Sentiment',
     pageRoutes: ['/social'],
@@ -167,6 +176,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'stock-social',
+    group: 'analysis',
     module: 'equities',
     label: 'Stock Social Sentiment',
     pageRoutes: ['/equities/social'],
@@ -178,6 +188,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'transfer-fees',
+    group: 'analysis',
     module: 'crypto',
     label: 'Transfer Fee Calculator',
     pageRoutes: ['/transfer-fees'],
@@ -202,6 +213,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'risk-scores',
+    group: 'analysis',
     module: 'crypto',
     label: 'Safety Scores & Risk Analysis',
     pageRoutes: ['/risk-scores'],
@@ -219,6 +231,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'data-source-config',
+    group: 'control',
     module: 'core',
     label: 'Data Source & Integration Controls',
     pageRoutes: ['/settings', '/data-sources'],
@@ -237,6 +250,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'staking-discovery',
+    group: 'analysis',
     module: 'crypto',
     label: 'Staking Discovery',
     pageRoutes: ['/staking-discovery'],
@@ -250,6 +264,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'equity-outliers',
+    group: 'ai',
     module: 'equities',
     label: 'AI Outlier Scan',
     pageRoutes: [],
@@ -262,6 +277,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'backtests',
+    group: 'analysis',
     module: 'equities',
     label: 'Strategy Backtests',
     pageRoutes: ['/equities/backtests'],
@@ -282,6 +298,7 @@ export const PREMIUM_FEATURES = [
   },
   {
     id: 'fund-look-through',
+    group: 'analysis',
     module: 'funds',
     label: 'Fund Look-Through & Holdings Overlap',
     pageRoutes: [],
@@ -295,6 +312,56 @@ export const PREMIUM_FEATURES = [
       'only its overlap panel, degrading rather than disappearing.',
   },
 ]
+
+// ─── Upsell grouping ──────────────────────────────────────────────────────────
+// The /upgrade page groups features by what they DO for a reader, not by which
+// module owns them: sixteen bullet points is a feature dump, four themes is
+// positioning. Ordered by how much of the paid product each theme represents.
+//
+// Lives here rather than in the page so a newly withheld feature cannot silently
+// miss the upsell — a feature's `group` is validated against this list by test,
+// the same way navHrefs and module ids are.
+
+/**
+ * @typedef {object} PremiumGroup
+ * @property {string} id
+ * @property {string} label   Section heading on /upgrade.
+ * @property {string} blurb   One line on what this theme is for.
+ */
+
+/** @type {PremiumGroup[]} */
+export const PREMIUM_GROUPS = [
+  {
+    id: 'ai',
+    label: 'AI research',
+    blurb: 'Agents that read the market for you — a morning brief built from your holdings, deep dives on any asset, and an assistant that knows the whole app.',
+  },
+  {
+    id: 'money',
+    label: 'Your actual money',
+    blurb: 'Track what you own and plan what to buy: holdings with cost basis and P&L, a diversified portfolio built to your horizon, budgets, and on-chain balances.',
+  },
+  {
+    id: 'analysis',
+    label: 'Deeper analysis',
+    blurb: 'The scoring and simulation layers — composite safety scores, strategy backtests, fund look-through, transfer-fee routing, and social sentiment.',
+  },
+  {
+    id: 'control',
+    label: 'Your own data sources',
+    blurb: 'Bring your own API keys and feeds, reorder providers, and see exactly which source served every number.',
+  },
+]
+
+/** Features belonging to a group, in manifest order. */
+export function featuresInGroup(groupId) {
+  return PREMIUM_FEATURES.filter((f) => f.group === groupId)
+}
+
+/** The feature that owns a page route, if any — used to personalise /upgrade. */
+export function featureForPageRoute(pathname) {
+  return PREMIUM_FEATURES.find((f) => isPremiumPath(pathname, f.pageRoutes))
+}
 
 // ─── Premium components inside otherwise-free pages ───────────────────────────
 // Not every premium feature owns a route. The Backtest tab lives inside the free

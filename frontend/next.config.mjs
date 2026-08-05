@@ -26,10 +26,16 @@ const PREMIUM_BUILD =
 // the page component is not reachable either way.
 const premiumRedirects = PREMIUM_BUILD
   ? []
-  : PREMIUM_PAGE_ROUTES.flatMap((route) => [
-      { source: route, destination: '/upgrade', permanent: false },
-      { source: `${route}/:path*`, destination: '/upgrade', permanent: false },
-    ])
+  : PREMIUM_PAGE_ROUTES.flatMap((route) => {
+      // Carry the route the reader actually asked for, so /upgrade can lead with
+      // that feature rather than a generic list. It is the only signal of intent
+      // the redirect has, and it costs nothing to preserve.
+      const to = `/upgrade?from=${encodeURIComponent(route)}`
+      return [
+        { source: route, destination: to, permanent: false },
+        { source: `${route}/:path*`, destination: to, permanent: false },
+      ]
+    })
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

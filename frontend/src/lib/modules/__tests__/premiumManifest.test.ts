@@ -7,6 +7,9 @@ import {
   PREMIUM_PAGE_ROUTES,
   PREMIUM_DATA_ROUTES,
   PREMIUM_NAV_HREFS,
+  PREMIUM_GROUPS,
+  featuresInGroup,
+  featureForPageRoute,
   isPremiumPath,
 } from '../premiumManifest.mjs'
 import { MODULES, BUILD_MODULES } from '../registry'
@@ -160,6 +163,65 @@ describe('premium components inside free pages', () => {
     expect(PREMIUM_COMPONENTS.map((c) => c.module)).toContain('components/analytics/BacktestPanel')
     // Technical Analysis itself stays free — only the simulation is withheld.
     expect(shipped).toContain('/technical-analysis')
+  })
+})
+
+describe('upsell grouping on /upgrade', () => {
+  it('files every premium feature under a real group', () => {
+    // A feature with an unknown group renders nowhere on /upgrade — it would be
+    // withheld from the web and never mentioned as a reason to buy the desktop
+    // edition, which is the silent half of a botched upsell.
+    const groupIds = new Set(PREMIUM_GROUPS.map((g) => g.id))
+    for (const f of PREMIUM_FEATURES) {
+      expect(groupIds.has(f.group), `feature "${f.id}" has unknown group "${f.group}"`).toBe(true)
+    }
+  })
+
+  it('accounts for every feature exactly once across the groups', () => {
+    const grouped = PREMIUM_GROUPS.flatMap((g) => featuresInGroup(g.id))
+    expect(grouped).toHaveLength(PREMIUM_FEATURES.length)
+    expect(new Set(grouped.map((f) => f.id)).size).toBe(PREMIUM_FEATURES.length)
+  })
+
+  it('leaves no group empty', () => {
+    // An empty group renders a heading and blurb with nothing under it.
+    for (const g of PREMIUM_GROUPS) {
+      expect(featuresInGroup(g.id).length, `group "${g.id}" is empty`).toBeGreaterThan(0)
+    }
+  })
+
+  it('gives every group a label and a blurb', () => {
+    for (const g of PREMIUM_GROUPS) {
+      expect(g.label?.length, `group "${g.id}" has no label`).toBeGreaterThan(0)
+      expect(g.blurb?.length, `group "${g.id}" has no blurb`).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('?from= resolution on /upgrade', () => {
+  it('resolves each premium page route back to its own feature', () => {
+    // The redirect writes ?from=<route>; if this lookup missed, the page would
+    // silently fall back to the generic headline and the personalisation would
+    // be dead code nobody noticed.
+    for (const f of PREMIUM_FEATURES) {
+      for (const route of f.pageRoutes) {
+        expect(featureForPageRoute(route)?.id, `"${route}" resolved to the wrong feature`).toBe(f.id)
+      }
+    }
+  })
+
+  it('resolves a nested path to its owning feature', () => {
+    // The redirect also matches `${route}/:path*`, so /budget/transactions
+    // arrives as ?from=/budget — but a deep link could carry the nested path.
+    expect(featureForPageRoute('/budget/transactions')?.id).toBe('budget')
+  })
+
+  it('returns nothing for a free or unknown route', () => {
+    // ?from= is attacker-controllable in the sense that anyone can type it; an
+    // unknown value must degrade to the generic headline, not throw.
+    expect(featureForPageRoute('/assets')).toBeUndefined()
+    expect(featureForPageRoute('/nonsense')).toBeUndefined()
+    expect(featureForPageRoute('')).toBeUndefined()
   })
 })
 

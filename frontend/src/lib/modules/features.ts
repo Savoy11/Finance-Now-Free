@@ -2,6 +2,9 @@ import type { ModuleId } from './registry'
 import { PREMIUM_BUILD } from '@/lib/distribution'
 import {
   PREMIUM_FEATURES,
+  PREMIUM_GROUPS,
+  featuresInGroup,
+  featureForPageRoute,
   PREMIUM_PAGE_ROUTES,
   PREMIUM_DATA_ROUTES,
   PREMIUM_NAV_HREFS,
@@ -16,6 +19,7 @@ import {
 
 export interface PremiumFeature {
   id: string
+  group: string
   module: ModuleId
   label: string
   pageRoutes: string[]
@@ -52,4 +56,30 @@ export function isPageRouteAvailable(pathname: string): boolean {
 export function isDataRouteAvailable(pathname: string): boolean {
   if (PREMIUM_BUILD) return true
   return !isPremiumPath(pathname, PREMIUM_DATA_ROUTES as string[])
+}
+
+// ─── Upsell grouping (see PREMIUM_GROUPS in the manifest) ────────────────────
+
+export interface PremiumGroup {
+  id: string
+  label: string
+  blurb: string
+}
+
+export const PREMIUM_GROUP_LIST = PREMIUM_GROUPS as PremiumGroup[]
+
+/** Features in a group, manifest order. Empty groups are the caller's to skip. */
+export function premiumFeaturesInGroup(groupId: string): PremiumFeature[] {
+  return featuresInGroup(groupId) as PremiumFeature[]
+}
+
+/**
+ * The premium feature that owns `pathname`, if any.
+ *
+ * Powers the personalised headline on /upgrade: the redirect carries the route
+ * the reader actually asked for, so the page can name that feature instead of
+ * opening with a generic list.
+ */
+export function premiumFeatureForRoute(pathname: string): PremiumFeature | undefined {
+  return featureForPageRoute(pathname) as PremiumFeature | undefined
 }
