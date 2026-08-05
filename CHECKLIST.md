@@ -7,8 +7,11 @@ decisions stay traceable. Product decisions and their rationale live in
 [`docs/DISTRIBUTION-SPLIT.md`](docs/DISTRIBUTION-SPLIT.md) — this file tracks *work*, that file
 records *why*.
 
-Scope reminder: this repo only affects the free web edition. The desktop product lives in its own
-repository and is untouched by anything here.
+Scope reminder: this repo is a **copy** of the Finance Now codebase, and sessions here work only
+on that copy. The original lives in its own repository and is never touched from here; News-Charts
+is a different product with its own backlog. The rule and the reasoning are at the top of
+[`CLAUDE.md`](CLAUDE.md), and `frontend/src/lib/__tests__/repoBoundary.test.ts` enforces the parts
+a machine can check.
 
 ---
 
@@ -71,6 +74,23 @@ repository and is untouched by anything here.
 
 ## Done log
 
+- [x] **2026-08-05 — Repo separation made explicit and enforceable.** `CLAUDE.md` — the file
+      auto-loaded at the start of every session — opened as the *original's* guide: it stated the
+      working directory as `C:\Users\...\Crypto-Stuff\frontend` (a path in the original
+      checkout), never mentioned the free/premium split, and its Feature Inventory described
+      surfaces that are desktop-only on the web build. Any session reading it would have been
+      pointed at the wrong codebase and given a false picture of what the free edition ships.
+      It now opens with a scope rule (this repo is the copy; never touch the original; News-Charts
+      is a separate product), a two-build table, a pointer to the premium manifest as the source
+      of truth, and a warning that the inventory below describes the full product. Stale Windows
+      paths in the MCP setup section were made repo-relative too.
+      Backed by `repoBoundary.test.ts` (7 checks), because prose drifts: no submodules, every git
+      remote must be this repo, no workflow may use `actions/checkout`'s `repository:` input, and
+      `CLAUDE.md` must carry no path into the original while still stating the scope rule and
+      naming the manifest. **Negative-tested** — reintroducing the original's path and deleting
+      the rule each fail with the intended message, and pass again when reverted.
+      ⚠ Not done, needs its own session: **News-Charts has no `CLAUDE.md` at all**, so a session
+      there starts with no scope statement and no equivalent boundary test.
 - [x] **2026-08-05 — Auth.js no longer mounted on the web build.** Fixes the failing
       `/api/auth/session` request on every page load: the free edition has no sign-in, no user
       table and a localStorage watchlist, so `SessionProvider` was polling an endpoint that 500s

@@ -1,7 +1,47 @@
-# Finance Now — Multi-Asset Financial Analytics
+# Finance Now — FREE WEB EDITION (this repo)
 ## Claude Code Project Guide
 
 This file is auto-loaded by Claude Code at session start. It gives instant context so you can make changes without re-exploring the codebase.
+
+---
+
+## ⛔ Scope rule — read this first
+
+**This repository is `Savoy11/Finance-Now-Free`: a COPY of the Finance Now codebase that builds
+the free web edition.** It is not the original.
+
+1. **Never touch the original Finance Now repository from a session here.** It is a separate repo
+   with its own history. It is not cloned into this workspace, this repo has exactly one git
+   remote (`Savoy11/Finance-Now-Free`), there are no submodules, and no workflow checks out
+   another repository. Keep it that way — do not add a remote, a submodule, or a
+   `repository:` override to reach it.
+2. **Never commit to another product's repo from a session here.** `Savoy11/News-Charts` is a
+   different product with its own backlog; work on it belongs in its own session.
+3. **Working directory is `frontend/` inside THIS repo.** Any absolute Windows path you find in
+   docs is a stale pointer inherited from the original — treat it as a bug and fix it, don't
+   follow it.
+4. **The work log for this repo is [`CHECKLIST.md`](CHECKLIST.md)** (prioritised, with a dated
+   done log). Product decisions and their reasoning live in
+   [`docs/DISTRIBUTION-SPLIT.md`](docs/DISTRIBUTION-SPLIT.md).
+
+### One codebase, two builds
+
+This copy still contains the **whole** product. Nothing was deleted; the free/premium split is a
+**build-time exclusion** driven by `NEXT_PUBLIC_FN_DISTRIBUTION`:
+
+| Build | Command | What it contains |
+|---|---|---|
+| Free web edition (default, fails closed) | `npm run build` | Premium pages compile to a stub, premium data routes 404 from middleware, premium nav entries don't render |
+| Desktop parity build | `NEXT_PUBLIC_FN_DISTRIBUTION=desktop npm run build` | Everything — used to verify the split removed nothing permanently |
+
+**The single source of truth for what is withheld is
+`frontend/src/lib/modules/premiumManifest.mjs`.** Changing what the free edition ships is a
+one-file edit there; `next.config.mjs`, the middleware, the nav registry, the `/upgrade` page and
+the `/api/v1` docs all derive from it.
+
+> ⚠ **The Feature Inventory further down this file describes the FULL product.** A feature listed
+> there as live may be desktop-only on the web build. Check the premium manifest before assuming a
+> surface exists in the free edition.
 
 ---
 
@@ -9,7 +49,7 @@ This file is auto-loaded by Claude Code at session start. It gives instant conte
 
 An institutional-grade financial analytics suite built with Next.js 15 (App Router). It began as a crypto dashboard (risk, reserves, news sentiment, transfer fees, staking) and has grown into an entitlement-gated module suite (see `docs/ROADMAP.md`): a **core** section (headlines, watchlist, portfolios, compare, research, brief) plus six optional modules — **Crypto** (the original Finance Now), **Equities** (`/equities`), **Macro Markets** (`/macro`), **ETFs & Funds** (`/funds`), **Budget** (`/budget`, the first personal-finance pillar — accounts, CSV import, monthly budgets), and the premium **Portfolio Builder** (`/portfolio-builder`, its own entitlement). Modules are declared in `src/lib/modules/registry.ts`; the sidebar renders from that registry, modules can be toggled in Integrations → Suite Modules, and **every optional module's pages are wrapped in `<ModuleGate>`** so a disabled module is locked by direct URL too, not just hidden from the nav. The frontend runs **live-only** against public data providers via its `/live-data/*` route handlers. User data (portfolios, watchlists, builder plans, entitlements) persists to Postgres through `/api/user/*`; an optional legacy Python backend still serves assets/market-data/alerts/risk-scores, but **not** auth — sign-in is Auth.js against the app's own `users` table. Surfaces with no free real-time source show an explicit "not available" notice — there is no mock/demo data path.
 
-**Working directory:** `C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend`
+**Working directory:** `frontend/` (relative to this repo's root — see the scope rule above)
 
 **Agent charters:** deployed maintenance agents follow `docs/agents/` —
 `checklist-steward.md` (proposes checklist/ledger updates, applies only after owner
@@ -595,7 +635,7 @@ return NextResponse.json(data, { headers: CORS })
 
 ## MCP Server (`mcp-server/`)
 
-A standalone Node.js MCP server at `Crypto-Stuff/mcp-server/` that exposes Finance Now tools to Claude and any MCP-compatible AI agent. It calls the `/api/v1/` endpoints — Finance Now frontend must be running.
+A standalone Node.js MCP server at `mcp-server/` (this repo's root) that exposes Finance Now tools to Claude and any MCP-compatible AI agent. It calls the `/api/v1/` endpoints — Finance Now frontend must be running.
 
 ### Tools exposed
 | Tool | Description |
@@ -625,7 +665,7 @@ npm run build
   "mcpServers": {
     "finance-now": {
       "command": "node",
-      "args": ["C:/Users/marcu/OneDrive/Desktop/Crypto-Stuff/mcp-server/dist/index.js"],
+      "args": ["<path-to-this-repo>/mcp-server/dist/index.js"],
       "env": { "FN_BASE_URL": "http://localhost:3000" }
     }
   }
@@ -636,7 +676,7 @@ Claude Desktop config lives at `%APPDATA%\Claude\claude_desktop_config.json` on 
 ### Add to Claude Code (project-level MCP)
 ```bash
 # Run from any directory — adds Finance Now MCP to this project's .claude/settings.json
-claude mcp add finance-now node C:/Users/marcu/OneDrive/Desktop/Crypto-Stuff/mcp-server/dist/index.js
+claude mcp add finance-now node <path-to-this-repo>/mcp-server/dist/index.js
 ```
 
 ### Environment variable
