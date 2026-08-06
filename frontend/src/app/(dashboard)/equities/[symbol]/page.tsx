@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { clsx } from 'clsx'
@@ -140,6 +141,8 @@ function EquityDetailInner() {
                 {formatPercent(change, 2)} today
               </p>
             )}
+            {/* Desktop-only: /research and the agent behind it are premium. */}
+            {PREMIUM_BUILD && (
             <Link
               href={`/research?symbol=${encodeURIComponent(symbol)}`}
               className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-xs font-medium text-white hover:bg-violet-500 transition-colors"
@@ -147,6 +150,7 @@ function EquityDetailInner() {
             >
               <Sparkles size={13} aria-hidden /> Analyze with AI
             </Link>
+            )}
           </div>
         </div>
       </div>

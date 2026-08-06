@@ -5,7 +5,7 @@ import { ExternalLink, Database, KeyRound, ShieldCheck } from 'lucide-react'
 import { clsx } from 'clsx'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
-  DATA_SOURCES, SOURCE_STATUS_META, PROVIDER_AUTH_META,
+  BUILD_DATA_SOURCES, SOURCE_STATUS_META, PROVIDER_AUTH_META,
   type DataSourceEntry, type SourceStatus,
 } from '@/lib/data/dataSources'
 
@@ -72,7 +72,7 @@ export default function DataSourcesPage() {
   const [statusFilter, setStatusFilter] = useState<SourceStatus | 'all'>('all')
   const [authFilter, setAuthFilter] = useState<'all' | 'keyless' | 'keyed'>('all')
 
-  const filtered = useMemo(() => DATA_SOURCES.filter(e => {
+  const filtered = useMemo(() => BUILD_DATA_SOURCES.filter(e => {
     if (statusFilter !== 'all' && e.status !== statusFilter) return false
     if (authFilter === 'keyless' && !e.providers.some(p => p.auth === 'none')) return false
     if (authFilter === 'keyed' && !e.providers.some(p => p.auth !== 'none')) return false
@@ -80,8 +80,8 @@ export default function DataSourcesPage() {
   }), [statusFilter, authFilter])
 
   const counts = useMemo(() => {
-    const c = { total: DATA_SOURCES.length } as Record<string, number>
-    for (const s of STATUS_ORDER) c[s] = DATA_SOURCES.filter(e => e.status === s).length
+    const c = { total: BUILD_DATA_SOURCES.length } as Record<string, number>
+    for (const s of STATUS_ORDER) c[s] = BUILD_DATA_SOURCES.filter(e => e.status === s).length
     return c
   }, [])
 

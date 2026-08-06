@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useMarketOverview } from '@/hooks/useMarketData'
@@ -61,8 +62,13 @@ function MarketOverviewPopout() {
 
   const items = [
     { label: 'Assets Monitored', value: overview?.totalAssets?.toString() ?? '—' },
-    { label: 'Avg Safety Score', value: overview?.avgRiskScore != null ? formatScore(overview.avgRiskScore) : NA_LABEL },
-    { label: 'High / Critical', value: overview?.criticalHighCount?.toString() ?? NA_LABEL },
+    // Both of these read the composite risk score, which is desktop-only — on
+    // the web they would be permanent N/A rows implying a broken feed rather
+    // than one this edition doesn't include.
+    ...(PREMIUM_BUILD ? [
+      { label: 'Avg Safety Score', value: overview?.avgRiskScore != null ? formatScore(overview.avgRiskScore) : NA_LABEL },
+      { label: 'High / Critical', value: overview?.criticalHighCount?.toString() ?? NA_LABEL },
+    ] : []),
     { label: 'Active Alerts', value: alertStats?.unread?.toString() ?? '—' },
     { label: 'Total Market Cap', value: overview?.totalMarketCap != null ? formatCompact(overview.totalMarketCap) : NA_LABEL },
   ]

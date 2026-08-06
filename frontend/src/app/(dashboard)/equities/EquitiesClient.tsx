@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SourceLine } from '@/components/ui/SourceLine'
 import { MetricCard } from '@/components/ui/MetricCard'
 import { OutlierScanPanel } from '@/components/markets/OutlierScanPanel'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { SECTOR_INFO, type SectorId } from '@/lib/data/equityCatalog'
 import { formatCompact, formatCurrency, formatPercent } from '@/lib/utils/format'
 import { STALE_TIME_SHORT } from '@/lib/constants'
@@ -217,7 +218,9 @@ export function EquitiesClient() {
             Showing the curated large-cap list.{' '}
             {universeData.error?.includes('paid')
               ? <>The full daily-refreshed universe (thousands of stocks) comes from FMP’s stock-screener endpoint, which requires a <span className="text-text-primary">paid FMP plan</span>. Your free key still powers per-stock quotes, profiles, charts, and earnings — and any ticker resolves on its detail page.</>
-              : <>Add a Financial Modeling Prep key in <Link href="/settings" className="text-accent-blue hover:underline">Settings → Integrations → Equity Market Data</Link>. Note: the broad universe list needs FMP’s <span className="text-text-primary">paid</span> screener endpoint; a free key still powers per-stock data.</>}
+              : PREMIUM_BUILD
+                ? <>Add a Financial Modeling Prep key in <Link href="/settings" className="text-accent-blue hover:underline">Settings → Integrations → Equity Market Data</Link>. Note: the broad universe list needs FMP’s <span className="text-text-primary">paid</span> screener endpoint; a free key still powers per-stock data.</>
+                : <>The broad daily-refreshed universe needs a paid market-data plan, so this edition lists the curated large-cap set. Every ticker still resolves on its own detail page.</>}
           </p>
         </div>
       )}
@@ -234,8 +237,9 @@ export function EquitiesClient() {
           subtitle={largest ? largest.name : '—'} accentColor="#10b981" />
       </div>
 
-      {/* AI outlier scan */}
-      <OutlierScanPanel />
+      {/* AI outlier scan — desktop-only: the panel runs an agent against
+          /live-data/stock-outliers, which the web build 404s. */}
+      {PREMIUM_BUILD && <OutlierScanPanel />}
 
       {/* Sector filter */}
       <div className="flex flex-wrap gap-1.5">

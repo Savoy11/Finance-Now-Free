@@ -1,3 +1,5 @@
+import { isDataRouteAvailable } from '@/lib/modules/features'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Finance Now DATA SOURCE REGISTRY — single source of truth for "where does this data
 // come from?". Consumed by three things so nothing drifts:
@@ -382,8 +384,31 @@ export function getSource(id: string): DataSourceEntry | undefined {
 
 /** All entries for a module, in registry order. */
 export function sourcesForModule(module: DataSourceEntry['module']): DataSourceEntry[] {
-  return DATA_SOURCES.filter(e => e.module === module)
+  return BUILD_DATA_SOURCES.filter(e => e.module === module)
 }
+
+/**
+ * The entries whose route this build actually serves.
+ *
+ * The Data Sources page is free, so on the web it must not advertise the feeds
+ * behind desktop-only features — a reader would see "Portfolio prices · Live"
+ * for a surface this build has no route for, and the page's whole job is being
+ * an accurate account of where numbers come from. Derived from the premium
+ * manifest so there is no second list to keep in step.
+ *
+ * `covers` siblings are checked too: a surface stays only if every route folded
+ * into it survives, so a partly-withheld entry can't claim full coverage.
+ * Entries with no route at all are reference-data rows and always survive.
+ */
+export const BUILD_DATA_SOURCES: DataSourceEntry[] = DATA_SOURCES.filter((e) => {
+  // `route` is prose, not a single path: some entries name two routes
+  // ("/a + /b") or annotate one ("/a (drift monitoring)"). Passing the whole
+  // string to isDataRouteAvailable() matched nothing and quietly kept the row —
+  // so extract every path token and require ALL of them to be served.
+  const paths = (e.route ?? '').split(/\s+/).filter((t) => t.startsWith('/')).map((t) => t.replace(/\/\*$/, ''))
+  if (!paths.every(isDataRouteAvailable)) return false
+  return (e.covers ?? []).every((c) => isDataRouteAvailable(`/live-data/${c}`))
+})
 
 export const SOURCE_STATUS_META: Record<SourceStatus, { label: string; cls: string }> = {
   live:        { label: 'Live',          cls: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' },

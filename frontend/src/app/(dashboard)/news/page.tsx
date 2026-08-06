@@ -1,6 +1,7 @@
 'use client'
 
 import { ModuleGate } from '@/components/layout/ModuleGate'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { Newspaper, ExternalLink, Clock, Tag, Zap, Settings, Loader2, Share2, Check, RefreshCw, Search, X, Info } from 'lucide-react'
@@ -321,7 +322,9 @@ function NewsPageInner() {
               Refresh
             </button>
           )}
-          {LIVE_DATA && (
+          {/* Source management is desktop-only — the web edition's feeds are
+              hard-coded, so there is nothing here for a reader to manage. */}
+          {LIVE_DATA && PREMIUM_BUILD && (
             <Link
               href="/settings"
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
@@ -341,14 +344,18 @@ function NewsPageInner() {
           <Newspaper className="mx-auto h-7 w-7 text-amber-400/70" />
           <p className="mt-2 font-medium text-slate-200 text-sm">No news sources configured</p>
           <p className="mt-1 text-xs text-slate-400 max-w-md mx-auto">
-            CryptoPanic now requires a paid API key (its free tier ended April 2026). Add a news source in Integrations to start seeing live news.
+            {PREMIUM_BUILD
+              ? 'CryptoPanic now requires a paid API key (its free tier ended April 2026). Add a news source in Integrations to start seeing live news.'
+              : 'No crypto news feed is responding right now. This is usually temporary — try refreshing in a few minutes.'}
           </p>
-          <Link
-            href="/settings"
-            className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg bg-accent-blue text-sm font-medium text-white hover:bg-blue-500 transition-colors"
-          >
-            <Settings size={14} /> Open Integrations
-          </Link>
+          {PREMIUM_BUILD && (
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-lg bg-accent-blue text-sm font-medium text-white hover:bg-blue-500 transition-colors"
+            >
+              <Settings size={14} /> Open Integrations
+            </Link>
+          )}
         </div>
       )}
 

@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server'
 import { CORS, options } from '../../_cors'
+import { isDataRouteAvailable } from '@/lib/modules/features'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 
 export const dynamic = 'force-dynamic'
 export { options as OPTIONS }
 
+// SPEC below describes the FULL product. What this build serves is SPEC filtered
+// through the premium manifest — see buildServedSpec() at the bottom. Keep adding
+// endpoints here as normal; the filter decides which distribution shows them.
 const SPEC = {
   openapi: '3.0.3',
   info: {
@@ -474,6 +479,77 @@ const SPEC = {
   },
 }
 
+// ─── Serving the spec this build actually honours ────────────────────────────
+// A published spec is a contract. Leaving withheld endpoints in it makes every
+// generated client and every agent that reads it wrong in a way that only shows
+// up as a 404 at call time, so the document is pruned to what the build serves.
+//
+// Three things have to go together, or the spec is merely shorter rather than
+// correct: the paths, the tags that only those paths used, and the schemas that
+// only those paths referenced. Orphaned tags render as empty sections in Swagger
+// UI, and orphaned schemas advertise response shapes nothing can return.
+
+type Operation = { tags?: string[] }
+type PathItem = Record<string, Operation>
+
+/** Every "#/components/schemas/X" referenced anywhere inside `node`. */
+function schemaRefs(node: unknown): string[] {
+  return [...JSON.stringify(node ?? null).matchAll(/#\/components\/schemas\/([A-Za-z0-9_]+)/g)].map((m) => m[1])
+}
+
+/**
+ * Schemas reachable from the surviving paths, followed transitively — a kept
+ * schema can $ref another (YieldCurveResponse → CurveSnapshot), so a single pass
+ * would drop a schema that is still needed and produce a spec that fails to
+ * resolve. Iterates to a fixpoint instead.
+ */
+function reachableSchemas(
+  paths: Record<string, PathItem>,
+  all: Record<string, unknown>
+): Record<string, unknown> {
+  const keep = new Set(schemaRefs(paths))
+  for (let changed = true; changed; ) {
+    changed = false
+    for (const name of [...keep]) {
+      for (const ref of schemaRefs(all[name])) {
+        if (!keep.has(ref)) { keep.add(ref); changed = true }
+      }
+    }
+  }
+  return Object.fromEntries(Object.entries(all).filter(([name]) => keep.has(name)))
+}
+
+function buildServedSpec() {
+  // Path keys are relative to the /api/v1 server base, so they need the prefix
+  // back before the manifest (which stores absolute paths) can judge them.
+  const paths = Object.fromEntries(
+    Object.entries(SPEC.paths as Record<string, PathItem>)
+      .filter(([path]) => isDataRouteAvailable(`/api/v1${path}`))
+  )
+
+  const usedTags = new Set(
+    Object.values(paths).flatMap((item) => Object.values(item).flatMap((op) => op.tags ?? []))
+  )
+
+  return {
+    ...SPEC,
+    info: {
+      ...SPEC.info,
+      description: PREMIUM_BUILD
+        ? SPEC.info.description
+        : 'Finance Now (free web edition) — programmatic access to coin prices, staking opportunities with safety scoring, crypto news with sentiment, security and macro-instrument quotes and history, the official US Treasury yield curve, and ECB reference FX rates. Designed for AI agents and automated workflows. Transfer-fee routing, exchange listings, and network fees are part of the desktop edition and are not served by this deployment.',
+    },
+    tags: SPEC.tags.filter((t) => usedTags.has(t.name)),
+    paths,
+    components: {
+      ...SPEC.components,
+      schemas: reachableSchemas(paths, SPEC.components.schemas as Record<string, unknown>),
+    },
+  }
+}
+
+const SERVED_SPEC = buildServedSpec()
+
 export async function GET() {
-  return NextResponse.json(SPEC, { headers: CORS })
+  return NextResponse.json(SERVED_SPEC, { headers: CORS })
 }

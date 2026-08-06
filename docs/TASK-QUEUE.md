@@ -1,4 +1,4 @@
-# CAEP Task Queue — Phase 1
+# Finance Now Task Queue — Phase 1
 
 Prioritized backlog of 14 requested items, restructured into 14 deployable tasks across 4 waves.
 Each task below has a ready-to-paste prompt for a remote agent.
@@ -143,7 +143,7 @@ Cheap, decisive, and unblocks the largest cross-cutting change in the queue.
 <details><summary>Deployable prompt</summary>
 
 ```
-Decide the canonical risk-score scale for the CAEP frontend
+Decide the canonical risk-score scale for the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md and
 docs/architecture/risk-framework.md first. This is a READ-ONLY design task — produce a written
 specification, change no code.
@@ -220,7 +220,7 @@ healthy before anything downstream trusts them.
 <details><summary>Deployable prompt</summary>
 
 ```
-Audit every live data source in the CAEP frontend
+Audit every live data source in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md and
 DATA-AVAILABILITY.md first — DATA-AVAILABILITY.md is the authoritative record of what is
 Live/Partial/Not-available.
@@ -263,7 +263,7 @@ The highest-leverage correctness task in the queue: 2,281 lines of untested math
 <details><summary>Deployable prompt</summary>
 
 ```
-Verify the correctness of CAEP's shared technical-analysis math in
+Verify the correctness of Finance Now's shared technical-analysis math in
 C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend.
 
 src/lib/utils/indicators.ts (1,703 lines, 61 exported functions) and src/lib/utils/backtest.ts
@@ -300,7 +300,7 @@ Report every behavioral change you make, since three pages will visibly shift.
 <details><summary>Deployable prompt</summary>
 
 ```
-Enhance the Compare page at src/app/(dashboard)/compare/page.tsx in the CAEP frontend
+Enhance the Compare page at src/app/(dashboard)/compare/page.tsx in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md first.
 
 Current state: compares 2-4 stocks/funds via normalized growth-of-100 plus summary stats,
@@ -331,7 +331,7 @@ new implementation. Note that Tailwind runs from a committed prebuilt CSS file �
 <details><summary>Deployable prompt</summary>
 
 ```
-Assess whether two pages in the CAEP frontend
+Assess whether two pages in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend) earn their place in the product. Read
 CLAUDE.md first. This is a READ-ONLY assessment — produce a written recommendation, change no
 code.
@@ -373,7 +373,7 @@ but do not make the change.
 <details><summary>Deployable prompt</summary>
 
 ```
-Examine, test, and fine-tune the prompts for all AI agents in the CAEP frontend
+Examine, test, and fine-tune the prompts for all AI agents in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md's "AI Agents" section
 first.
 
@@ -390,7 +390,7 @@ and equity-screener. Then the rest.
 For each agent: read its system prompt critically, then actually run it against real queries
 and evaluate the output. Look for prompts that are vague about output format, that fail to
 tell the agent which tools exist or when to use them, that invite fabrication when a tool
-returns no data, that omit the live-only constraint (CAEP has no mock data path — an agent
+returns no data, that omit the live-only constraint (Finance Now has no mock data path — an agent
 must say "not available" rather than invent a number), and that do not establish the agent's
 market scope.
 
@@ -436,7 +436,7 @@ prompt-level.
 <details><summary>Deployable prompt</summary>
 
 ```
-Fine-tune the screener on the Equity Stock Registry page in the CAEP frontend
+Fine-tune the screener on the Equity Stock Registry page in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md first, especially the
 Equities module section and the "P/E enrichment" subsection.
 
@@ -497,7 +497,7 @@ the TA/backtest surfaces carry no risk scoring. T10–T12 are thin here because 
 <details><summary>Deployable prompt</summary>
 
 ```
-Migrate the CAEP frontend (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend) to the single
+Migrate the Finance Now frontend (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend) to the single
 canonical risk scale specified in the R1 design document. Read that specification, CLAUDE.md,
 and docs/architecture/risk-framework.md first, and follow R1's migration order.
 
@@ -537,7 +537,7 @@ Requirements:
   RISKIEST providers, with a 200 and plausible data and no error surface. Follow R1's
   additive-only plan — add safetyScore/band/max_safety, never mutate the legacy trio, update the
   MCP server only after deploy. DECIDED by the user 2026-07-19 (R1's question P4): legacy fields
-  stay for now and NO deprecation date is set. CAEP has no consumer telemetry, so "nobody uses
+  stay for now and NO deprecation date is set. Finance Now has no consumer telemetry, so "nobody uses
   this" is an assumption — add request logging to the v1 routes as part of this task, per R1 §E2,
   so a removal decision can later be made from data rather than guesswork.
 - lib/agents/prompts.ts references risk scoring. T6 rewrote that file in Wave 1 — EXTEND its work,
@@ -564,7 +564,7 @@ Report every user-visible score or band change, since risk display shifts across
 <details><summary>Deployable prompt</summary>
 
 ```
-Run a detailed accuracy and usability audit of the Transfer Fees page in the CAEP frontend
+Run a detailed accuracy and usability audit of the Transfer Fees page in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md's transferFees.ts
 section first.
 
@@ -612,7 +612,7 @@ hand-maintained, and honest staleness labeling in the UI.
 <details><summary>Deployable prompt</summary>
 
 ```
-Audit the crypto Technical Analysis page in the CAEP frontend
+Audit the crypto Technical Analysis page in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend), at
 src/app/(dashboard)/technical-analysis/page.tsx (1,791 lines). Read CLAUDE.md first.
 
@@ -657,7 +657,7 @@ indicators, and report discrepancies with specifics.
 <details><summary>Deployable prompt</summary>
 
 ```
-Audit the Equity Technical Analysis page for accuracy in the CAEP frontend
+Audit the Equity Technical Analysis page for accuracy in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend), at
 src/app/(dashboard)/equities/technical-analysis/page.tsx (468 lines). Read CLAUDE.md first.
 
@@ -692,7 +692,7 @@ specifics.
 <details><summary>Deployable prompt</summary>
 
 ```
-Audit, test, and fine-tune the Equity Backtests page in the CAEP frontend
+Audit, test, and fine-tune the Equity Backtests page in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend), at
 src/app/(dashboard)/equities/backtests/page.tsx (385 lines). Read CLAUDE.md first.
 
@@ -737,7 +737,7 @@ Both tasks render or compute risk scores that R2 rewrites. They own disjoint fil
 <details><summary>Deployable prompt</summary>
 
 ```
-In the CAEP frontend (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend), rename the
+In the Finance Now frontend (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend), rename the
 crypto "Assets" page to "Coins" and redesign its layout. Read CLAUDE.md first.
 
 Rename: the nav entry is in src/lib/modules/registry.ts (line ~90, the crypto module's
@@ -771,7 +771,7 @@ new utility class or it silently renders as a no-op.
 <details><summary>Deployable prompt</summary>
 
 ```
-Audit the Staking page for accuracy in the CAEP frontend
+Audit the Staking page for accuracy in the Finance Now frontend
 (C:\Users\marcu\OneDrive\Desktop\Crypto-Stuff\frontend). Read CLAUDE.md's stakingProviders.ts
 section first.
 

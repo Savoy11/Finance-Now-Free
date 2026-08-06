@@ -5,6 +5,7 @@ import { Info } from 'lucide-react'
 import { clsx } from 'clsx'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import { getSource, SOURCE_STATUS_META } from '@/lib/data/dataSources'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 
 interface SourceLineProps {
   /** Registry id — usually the /live-data route folder (see dataSources.ts). */
@@ -22,8 +23,9 @@ function rel(asOf?: string): string | null {
 /**
  * Compact provenance line for a page/section: "Source: CoinGecko, Binance ·
  * updated 2m ago · details". Reads the canonical registry (dataSources.ts) by
- * id and links to the full /data-sources catalog, so provenance shown in the UI
- * always matches the documented source. Renders nothing if the id is unknown.
+ * id and (on desktop) links to the full /data-sources catalog, so provenance
+ * shown in the UI always matches the documented source. Renders nothing if the
+ * id is unknown.
  */
 export function SourceLine({ id, asOf, className }: SourceLineProps) {
   const entry = getSource(id)
@@ -37,9 +39,16 @@ export function SourceLine({ id, asOf, className }: SourceLineProps) {
       <span className={clsx('px-1 py-0.5 rounded border text-[9px] font-semibold leading-none', status.cls)}>{status.label}</span>
       <span><span className="text-text-secondary">Source:</span> {names}</span>
       {freshness && <span>· updated {freshness}</span>}
-      <Link href="/data-sources" className="inline-flex items-center gap-0.5 text-accent-blue/80 hover:text-accent-blue">
-        · <Info size={10} aria-hidden /> details
-      </Link>
+      {/* The "details" link points at the /data-sources catalog, which is
+          desktop-only. The provider names above are the substance and stay on
+          every build; only the link to the fuller catalog is dropped, so the
+          free edition still attributes every number without offering a door
+          that is no longer there. */}
+      {PREMIUM_BUILD && (
+        <Link href="/data-sources" className="inline-flex items-center gap-0.5 text-accent-blue/80 hover:text-accent-blue">
+          · <Info size={10} aria-hidden /> details
+        </Link>
+      )}
     </div>
   )
 }

@@ -6,11 +6,12 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { StatusBar } from '@/components/layout/StatusBar'
 import { DataStatusBanner } from '@/components/layout/DataStatusBanner'
+import { SiteFooter } from '@/components/layout/SiteFooter'
 import { PopoutLayer } from '@/components/layout/PopoutLayer'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { AssistantWidget } from '@/components/agents/AssistantWidget'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { useSession }       from 'next-auth/react'
+import { useAuthSession }   from '@/lib/auth/useAuthSession'
 import { useFeedStatus }    from '@/lib/feed/useFeedStatus'
 import { useRecentAlerts }  from '@/hooks/useAlerts'
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh'
@@ -66,6 +67,9 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
           <main role="main">
             <DataStatusBanner />
             <div className="p-4 sm:p-6"><ErrorBoundary>{children}</ErrorBoundary></div>
+            {/* Inside the scroll container, below the content: the disclosure
+                links have to be on every page (BUSINESS-CHECKLIST §3). */}
+            <SiteFooter />
           </main>
         </PullToRefresh>
         <StatusBar />
@@ -79,7 +83,7 @@ function DashboardInner({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { status } = useSession()
+  const { status } = useAuthSession()
 
   // 'loading' is deliberately not treated as unauthenticated: the session is
   // fetched after mount, so redirecting on it would bounce a signed-in user to

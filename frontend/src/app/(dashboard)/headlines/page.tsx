@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { PREMIUM_BUILD } from '@/lib/distribution'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { Newspaper, ExternalLink, Clock, Tag, Zap, Loader2, RefreshCw, Coins, LineChart, Star } from 'lucide-react'
@@ -316,7 +317,9 @@ export default function HeadlinesPage() {
           <PageHeader
             title="Headlines"
             subtitle="Top stories across every module in your bundle"
-            description="Merges the suite's general news feeds into one ranked view. Only modules enabled in your bundle contribute stories, so the sections below change with your entitlements."
+            description={PREMIUM_BUILD
+              ? "Merges the suite's general news feeds into one ranked view. Only modules enabled in your bundle contribute stories, so the sections below change with your entitlements."
+              : "Merges the suite's general news feeds into one ranked view, with a section per market covered by this edition."}
             details={[
               { label: 'Ranking', text: 'Breaking stories first, then most recent. The top strip draws from all enabled modules; module sections below exclude anything already promoted so nothing repeats.' },
               { label: 'Sources', text: 'Crypto stories come from /live-data/news (multi-provider RSS + JSON). Market stories come from /live-data/market-news (Yahoo Finance, MarketWatch, CNBC).' },
@@ -352,10 +355,19 @@ export default function HeadlinesPage() {
       {!cryptoOn && !marketsOn && (
         <div className="flex flex-col items-center justify-center py-16 text-text-muted text-center">
           <Newspaper size={36} className="mb-3 opacity-30" aria-hidden />
-          <p className="text-sm">No news-carrying modules are enabled in your bundle.</p>
-          <Link href="/settings" className="mt-3 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors">
-            Open Integrations
-          </Link>
+          {/* A free build has no module toggles, so it cannot reach this state
+              by choice — but if both feeds fail, say that rather than pointing
+              at a settings page that isn't there. */}
+          <p className="text-sm">
+            {PREMIUM_BUILD
+              ? 'No news-carrying modules are enabled in your bundle.'
+              : 'No news is available right now.'}
+          </p>
+          {PREMIUM_BUILD && (
+            <Link href="/settings" className="mt-3 px-3 py-1.5 rounded text-xs bg-bg-elevated border border-border text-text-secondary hover:text-text-primary transition-colors">
+              Open Integrations
+            </Link>
+          )}
         </div>
       )}
 

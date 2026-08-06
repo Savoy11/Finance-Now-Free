@@ -1,3 +1,42 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { PREMIUM_PAGE_ROUTES, PREMIUM_COMPONENTS } from './src/lib/modules/premiumManifest.mjs'
+
+const HERE = path.dirname(fileURLToPath(import.meta.url))
+
+// ─── Distribution gate ────────────────────────────────────────────────────────
+// Mirrors src/lib/distribution.ts and fails closed the same way: only the exact
+// string 'desktop' produces the full paid build, so a deploy that forgets the
+// variable ships the free web edition rather than publishing the paid product.
+//
+// Read from the non-public name as a fallback so a desktop build can set either;
+// NEXT_PUBLIC_FN_DISTRIBUTION is the one the app reads and the one that gets
+// inlined into the client bundle, so it is what the app half keys on.
+const PREMIUM_BUILD =
+  (process.env.NEXT_PUBLIC_FN_DISTRIBUTION ?? process.env.FN_DISTRIBUTION) === 'desktop'
+
+// Premium page routes are redirected away in a free build. Paired with the
+// premiumOnly() guard on the server handlers (lib/server/premiumGuard.ts) and the
+// nav filtering in lib/modules/registry.ts, that leaves a free build with no link
+// to a premium page, no page at the URL, and no handler behind it.
+//
+// Redirect rather than 404 because these URLs are already in the wild — the
+// upsell page explains what the desktop edition adds, which is more useful to a
+// reader following an old link than a dead end, and costs nothing in protection:
+// the page component is not reachable either way.
+const premiumRedirects = PREMIUM_BUILD
+  ? []
+  : PREMIUM_PAGE_ROUTES.flatMap((route) => {
+      // Carry the route the reader actually asked for, so /upgrade can lead with
+      // that feature rather than a generic list. It is the only signal of intent
+      // the redirect has, and it costs nothing to preserve.
+      const to = `/upgrade?from=${encodeURIComponent(route)}`
+      return [
+        { source: route, destination: to, permanent: false },
+        { source: `${route}/:path*`, destination: to, permanent: false },
+      ]
+    })
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
@@ -15,6 +54,60 @@ const nextConfig = {
   images: {
     domains: ['assets.coingecko.com', 'cryptologos.cc', 'raw.githubusercontent.com'],
     formats: ['image/avif', 'image/webp'],
+  },
+  webpack: (config, { webpack }) => {
+    // ── Compile premium pages out of the free web build ──
+    //
+    // Redirecting a premium URL stops a reader reaching the feature, and the
+    // middleware 404 stops its data being fetched — but on its own that still
+    // COMPILES the premium page and ships its JavaScript to the browser, where
+    // anyone can read it in devtools. Requirement is that premium code is not in
+    // the web deployment at all, so the page entry itself is swapped here.
+    //
+    // Replacing just each `page.tsx` (rather than every module in the folder) is
+    // deliberate: the stub has to satisfy only one import shape — a default
+    // export — instead of every named export the folder happens to use, which
+    // makes the substitution total rather than best-effort. With the entry gone,
+    // the page's private component tree is imported by nothing and webpack drops
+    // it. Components shared with a free page still ship, correctly, because a
+    // free page still needs them.
+    if (!PREMIUM_BUILD && PREMIUM_PAGE_ROUTES.length > 0) {
+      const dirs = PREMIUM_PAGE_ROUTES
+        .map((r) => r.replace(/^\//, '').replace(/\//g, '[\\\\/]'))
+        .join('|')
+      // Matches the route's own page.tsx and any nested one beneath it, so
+      // /budget covers /budget/transactions without listing it separately.
+      const premiumPages = new RegExp(
+        `app[\\\\/]\\(dashboard\\)[\\\\/](?:${dirs})(?:[\\\\/].*)?[\\\\/]page\\.tsx$`
+      )
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          premiumPages,
+          path.resolve(HERE, 'src/lib/premiumStub.tsx')
+        )
+      )
+    }
+
+    // ── Premium components inside otherwise-free pages ──
+    // A feature with no route of its own (the Backtest tab on the free Technical
+    // Analysis page) can't be redirected or 404'd, so its module is swapped for a
+    // stub with the same exports. The host page compiles unchanged and resolves to
+    // the stub, which imports no engine — so the engine, imported by nothing else,
+    // is dropped rather than shipped inside a page the web build still serves.
+    if (!PREMIUM_BUILD) {
+      for (const c of PREMIUM_COMPONENTS) {
+        // Anchored to the resolved absolute path so the match cannot collide with
+        // a same-named module elsewhere in the tree or in node_modules.
+        const target = path.resolve(HERE, 'src', `${c.module}.tsx`)
+        config.plugins.push(
+          new webpack.NormalModuleReplacementPlugin(
+            new RegExp(`^${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`),
+            path.resolve(HERE, 'src', `${c.stub}.tsx`)
+          )
+        )
+      }
+    }
+    return config
   },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -40,6 +133,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Free web build only — premium routes land on the upsell page. Empty in a
+      // desktop build. Listed first so a premium route can never be shadowed by a
+      // later entry.
+      ...premiumRedirects,
       // Global page de-routed pending a post-production rework (see T5 triage:
       // docs/assessments/T5-utility-triage.md). The page and its
       // /live-data/cbdc-data route are intentionally LEFT IN PLACE — this only

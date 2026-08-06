@@ -52,7 +52,7 @@ The page today computes, per request, from `Promise.allSettled` over three sourc
 
 - **Stablecoins** — 5 pillars (Reserve 30 / Peg 25 / Structure 20 / Adoption 15 / News 10)
   with multiplicative fatal-flaw slashing, from DefiLlama `stablecoins?includePrices=true`,
-  curated attestation metadata, and the CAEP news pipeline.
+  curated attestation metadata, and the Finance Now news pipeline.
 - **Majors** — 5 pillars (Volatility 30 / Liquidity 25 / Scale 25 / Trend 10 / News 10)
   from one batched CoinGecko `/coins/markets` call with `sparkline=true`.
 
@@ -66,7 +66,7 @@ of that score to the twelve components that still render `N/A`. See §7.
 
 ## 1. The canonical scale
 
-> **CAEP risk scores are 0–100 integers-with-decimals where HIGHER = SAFER.**
+> **Finance Now risk scores are 0–100 integers-with-decimals where HIGHER = SAFER.**
 > A score of 95 means low risk. A score of 5 means critical risk.
 > There is no other scale in the product's user-facing or public-API surface.
 
@@ -118,7 +118,7 @@ public-API field description must say **"Safety Score"** or carry an explicit
 ambiguity, and it does not require touching 1,199 lines of tested engine.
 
 > **PRODUCT DECISION REQUIRED (P1):** approve the user-facing rename to "Safety Score"
-> (or an alternative — "Quality Score", "CAEP Score"). This spec's migration plan assumes
+> (or an alternative — "Quality Score", "Finance Now Score"). This spec's migration plan assumes
 > approval. If rejected, every surface must instead carry an inline "higher = safer"
 > caption, which is more chrome for the same outcome.
 
@@ -130,7 +130,7 @@ this: null dimensions are excluded and remaining weights renormalize
 (`engine.ts:74-103`), driving `coverage` down rather than the score. When *no* dimension
 has data, it throws rather than returning a number — and both callers catch and omit the
 asset (`route.ts:232`, `:260`) rather than fabricating. This behaviour is correct and is
-canon. It is also what makes CAEP's live-only rule work at the scoring layer.
+canon. It is also what makes Finance Now's live-only rule work at the scoring layer.
 
 ### 1.4 Every score carries provenance
 
@@ -379,7 +379,7 @@ scale would imply a comparability that does not exist.
 
 **Recommendation:** keep it separate and rename its field to `suspicionScore` with its
 own `clean | suspicious | flagged | critical` vocabulary, explicitly documented as *not*
-a CAEP risk/safety score. It must never be rendered in a `RiskScoreBadge` or compared
+a Finance Now risk/safety score. It must never be rendered in a `RiskScoreBadge` or compared
 against a composite.
 
 > **PRODUCT DECISION REQUIRED (P3):** confirm that pump-report stays outside the canonical
@@ -490,7 +490,7 @@ scale with a **four-level `low|medium|high|critical`** vocabulary. It is consume
 - **`GET /api/v1/openapi.json`** — the published contract. `:266` documents
   *"Composite risk score 1–10 (10 = highest risk)"*; `:99` documents `max_risk` as
   *"Maximum composite risk score (1–10)"*; `:95` describes the 6-dimension composite.
-- **Any external agent or script** that has read that spec. CAEP cannot enumerate these.
+- **Any external agent or script** that has read that spec. Finance Now cannot enumerate these.
 
 **Why a naive change is dangerous, not merely breaking.** `max_risk` is a *filter with
 inverted meaning across the polarity flip*. An agent that has cached "max_risk=4 means
@@ -515,7 +515,7 @@ mutating the existing field in place.
    product decision to break unknown consumers.
 
 > **PRODUCT DECISION REQUIRED (P4):** approve the additive-forever posture for
-> `/api/v1/staking/opportunities` (recommended), or set a hard deprecation date. CAEP has
+> `/api/v1/staking/opportunities` (recommended), or set a hard deprecation date. Finance Now has
 > no consumer telemetry on `/api/v1/`, so "no one is using it" is an assumption, not a
 > fact. Adding request logging to `/api/v1/*` should precede any removal decision.
 
@@ -621,7 +621,7 @@ different dimensions, different anchors, and different underlying distributions.
 
 | Asset class | Profile | Pillars | Sources | Verdict |
 |---|---|---|---|---|
-| Stablecoins | `stablecoin` v-current | Reserve 30 / Peg 25 / Structure 20 / Adoption 15 / News 10, + fatal-flaw slashing | DefiLlama stablecoins API, curated attestation + structure metadata, CoinGecko 7d sparkline, CAEP news pipeline | **Defensible.** Best-grounded surface in the app. |
+| Stablecoins | `stablecoin` v-current | Reserve 30 / Peg 25 / Structure 20 / Adoption 15 / News 10, + fatal-flaw slashing | DefiLlama stablecoins API, curated attestation + structure metadata, CoinGecko 7d sparkline, Finance Now news pipeline | **Defensible.** Best-grounded surface in the app. |
 | Majors (non-pegged w/ CG id) | `cryptoAsset` v-current | Volatility 30 / Liquidity 25 / Scale 25 / Trend 10 / News 10 | One batched CoinGecko `/coins/markets` call (`sparkline=true`, `price_change_percentage=24h,30d`) | **Defensible, with a stated limit** — see §7.3. |
 | Everything else | — | — | — | Correctly absent. |
 
