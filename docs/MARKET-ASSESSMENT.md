@@ -1,4 +1,4 @@
-# CAEP — Market Assessment & Growth Outlook
+# Finance Now — Market Assessment & Growth Outlook
 
 > ⚠ **STALE-CLAIM WARNING (added 2026-07-28).** This assessment predates major work and
 > two of its load-bearing claims are now false: risk scoring **no longer shows N/A**
@@ -18,13 +18,13 @@ verification) plus current competitor pricing research (July 2026)._
 
 ## 1. Executive summary
 
-**Verdict: CAEP is not sellable as-is, but it contains a genuinely marketable product —
+**Verdict: Finance Now is not sellable as-is, but it contains a genuinely marketable product —
 if it is repositioned as a focused crypto-operations utility rather than a general
 analytics platform, and if ~3–6 months of productization work (auth, multi-tenancy,
 hosting) is completed first.**
 
-- Against research platforms (Messari, Nansen) CAEP loses on data depth and will not win.
-- Against **utility tools** (fee calculators, staking dashboards, portfolio trackers) CAEP
+- Against research platforms (Messari, Nansen) Finance Now loses on data depth and will not win.
+- Against **utility tools** (fee calculators, staking dashboards, portfolio trackers) Finance Now
   is competitive today and differentiated in three specific ways (§4).
 - The most defensible angle is one almost no competitor serves: **agent-native crypto
   data** (clean REST + OpenAPI + MCP server) at a moment when AI-agent tooling demand is
@@ -64,15 +64,15 @@ hosting) is completed first.**
 
 ## 3. Competitive landscape (July 2026 pricing)
 
-| Competitor | What they sell | Price | CAEP overlap |
+| Competitor | What they sell | Price | Finance Now overlap |
 |---|---|---|---|
-| **Messari** | Institutional research, data, taxonomy | Pro ~$29.99/mo ($300/yr); Enterprise $6k–34k/yr | Low — research depth CAEP can't match |
+| **Messari** | Institutional research, data, taxonomy | Pro ~$29.99/mo ($300/yr); Enterprise $6k–34k/yr | Low — research depth Finance Now can't match |
 | **Nansen** | On-chain "smart money" analytics | Free + Pro $49/mo annual ($69 monthly); collapsed its $999 tier in late 2025 | Low-medium — signals pricing pressure at the high end |
 | **CoinStats** | Retail portfolio tracker | Free / Premium ~$13.99/mo / "Degen" ~$62.91/mo | **High** — closest retail price anchor |
 | **Delta (eToro)** | Portfolio tracker | Pro ~$99.99/yr | High on portfolio; none on ops tools |
 | **CoinGecko / CoinMarketCap** | Market data, free consumer apps | Free (ads/API monetized) | High on data; they set the "free" expectation |
 | **DeFiLlama** | DeFi TVL/fees analytics | **Free, open** | Medium — sets free expectation for reserve/TVL data |
-| **Staking Rewards** | Staking data | Free + enterprise data sales | Medium-high on staking; CAEP's risk taxonomy is deeper per-provider |
+| **Staking Rewards** | Staking data | Free + enterprise data sales | Medium-high on staking; Finance Now's risk taxonomy is deeper per-provider |
 | **TradingView** | Charting | ~$14–60/mo | Medium on TA; unbeatable on charting breadth |
 | **Fee/bridge comparators** (Swapzone etc.) | Route comparison | Free (affiliate-monetized) | **High** on transfer routing — but none combine it with the rest |
 
@@ -83,7 +83,7 @@ squeezing the middle: winners are either free-with-scale or cheap-and-focused.
 
 ---
 
-## 4. Where CAEP actually wins
+## 4. Where Finance Now actually wins
 
 1. **Transfer-route optimizer with safety rails.** Ranked multi-network routes with fee
    breakdowns, ETAs, and EVM address-collision warnings. Free comparators do pieces of
@@ -92,16 +92,16 @@ squeezing the middle: winners are either free-with-scale or cheap-and-focused.
    contract, slashing, liquidity, regulatory) is more granular than Staking Rewards' public
    surface.
 3. **Agent-native surface.** REST + OpenAPI + MCP server means an AI agent can consume
-   CAEP out of the box. Messari/Nansen sell human dashboards; the agent-tooling wave is
+   Finance Now out of the box. Messari/Nansen sell human dashboards; the agent-tooling wave is
    underserved and growing. This is also the most future-proof differentiator.
 4. **Data honesty as brand.** Strict-live architecture (no fabricated numbers, explicit
    "not available", per-provider utilization transparency) is a real trust story in a
    market notorious for fake data.
 
-## Where CAEP loses (don't fight these battles)
+## Where Finance Now loses (don't fight these battles)
 - Research depth, on-chain intelligence, historical archives → Messari/Nansen/Dune win.
 - Coin coverage and charting breadth → CoinGecko/TradingView win.
-- "Free everything" expectations → DeFiLlama/CoinGecko set the floor; CAEP's free tier
+- "Free everything" expectations → DeFiLlama/CoinGecko set the floor; Finance Now's free tier
   must be genuinely useful.
 
 ---
@@ -112,7 +112,7 @@ squeezing the middle: winners are either free-with-scale or cheap-and-focused.
 freemium web app for active retail users who move funds between exchanges, stake, and
 watch a portfolio — plus an API/agent tier. Positioning sentence:
 
-> _"CAEP tells you the cheapest safe way to move your crypto, which staking is actually
+> _"Finance Now tells you the cheapest safe way to move your crypto, which staking is actually
 > safe, and watches your pegs and positions — with data honesty no one else offers, and
 > an API your AI agent can use."_
 
@@ -178,7 +178,7 @@ near zero at launch.
    + trust story earns payment.
 2. **Solo-maintainer risk** — 20+ live integrations rot without maintenance (Forkast feed
    died silently; CryptoPanic killed its free tier — both caught this session).
-3. **Platform dependency** — CAEP resells presentation of others' data; upstream terms
+3. **Platform dependency** — Finance Now resells presentation of others' data; upstream terms
    changes are existential without BYOK.
 4. **Crypto cyclicality** — retail tool demand tracks the market cycle; current drawdown
    cuts both ways (cheaper acquisition, lower willingness to pay).

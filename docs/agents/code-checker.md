@@ -110,7 +110,7 @@ as a question with your reasoning — do not change it.
 | Celsius (defunct) in the staking catalog | Deliberately retained as the educational cautionary example |
 | Sequential provider ladders not parallelised | See failure-boundary rules above |
 | `config/route.ts` save-time URL checks are string-level | On purpose — a Save should not fail because DNS was down; fetch-time paths carry the resolved checks |
-| `LOCAL_USER_EMAIL = 'local@caep.local'` not rebranded | Sentinel keys the local user's DB row; renaming orphans all existing data |
+| Surviving `caep` **identifiers** after the Finance Now rename | Prose was renamed (2026-08-06); identifiers deliberately were not. `caep:*` localStorage keys are the legacy side of `migrateStorageKey()` — rename them and every existing user's watchlists/portfolios/alerts orphan. `CAEP_ADMIN_TOKEN`/`CAEP_ALLOW_LOCAL_USER`/`CAEP_BASE_URL` and the `x-caep-token` header are documented back-compat aliases. `local@caep.local` keys the local user's DB row. The Postgres db/user `caep` (+ `caep_app`) is an infra migration, not a rename — the Grafana/Prometheus rules query `datname="caep"` and desync silently if only one side moves. Historical docs (`app-audit-2026-07-27.md`, `production-readiness-scorecard.md`) keep the old name on purpose: they are dated snapshots, and one of them says so in its own header |
 | Crypto pages under `/assets` though the nav says "Coins" | Route kept to preserve deep links (T4 decision) |
 | `/live-data/chart` serves synthetic OHLC | Marked `synthetic: true`; its one consumer (Compare) reads closes only. New consumers must be close-only or use `/live-data/ohlcv` |
 | Macro catalogs carry no reference prices | Futures/FX quotes stale in hours; unpriced = honest dash |
